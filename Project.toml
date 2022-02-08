@@ -3,6 +3,15 @@ uuid = "5a3eb610-29b2-4cbe-8ba2-ea97f65fa95d"
 authors = ["Andrea Pagnani, Politecnico di Torino"]
 version = "0.1.0"
 
+[deps]
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+CUDAKernels = "72cfdca4-0801-4ab0-bf6a-d52aa10adc57"
+KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+LoopVectorization = "bdcacae8-1622-11e9-2a5c-532679323890"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Tullio = "bc48ee85-29a4-5162-ae0b-a64e1601d4bc"
+
 [compat]
 julia = "1.7"
 
