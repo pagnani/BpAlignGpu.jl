@@ -1,0 +1,3 @@
+[deps]
+BpAlignGpu = "5a3eb610-29b2-4cbe-8ba2-ea97f65fa95d"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
