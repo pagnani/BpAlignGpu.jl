@@ -17,9 +17,10 @@ function crea_instance_tensor_long(N, L; T = Float32)
     return A, x1, x2, y
 end
 
-function crea_instance_J_cond(Q, L; T=Float32)
-    cond = rand(T, Q, Q, L, L) |> cu
-    J = rand(T, Q, Q, L, L) |> cu
+function crea_instance_J_cond(Q, L; T=Float32, gpu=true)
+    gpufun = gpu ? cu : identity
+    cond = rand(T, Q, Q, L, L) |> gpufun
+    J = rand(T, Q, Q, L, L) |> gpufun
     return cond, J
 end
 

@@ -46,29 +46,94 @@ struct ParamAlgo
     verbose::Bool
 end
 
-struct ParamModel
+struct ParamModel{T}
     N::Int
     L::Int
     q::Int
-    muint::Float64
-    muext::Float64
-    lambda_o::Vector{Float64}
-    lambda_e::Vector{Float64}
-    H::Matrix{Float64}
-    J::Array{Float64,4}
+    muint::T
+    muext::T
+    lambda_o::Vector{T}
+    lambda_e::Vector{T}
+    H::Matrix{T}
+    J::Array{T,4}
 end
 
-struct BPMessages{T2,T3}
+struct BPMessages{T2,T3,T6}
     F::T3
     B::T3
     hF::T3
     hB::T3
     scra::T2
+    Hseq::T3
+    Jseq::T6
 end
 
-function BPMessages(L::Int, N::Int; gpu::Bool = true, T::DataType = Float32)
+function BPMessages(seq::Seq, para::ParamModel; T = Float32, ongpu=true)
+    @extract seq:intseq
+    @extract para:J H q
+    L = size(H, 2)
+    N = length(intseq)
+    gpufun = ongpu ? cu : identity
+    Hseq = zeros(T, N + 2, 2, L)
+    Jseq = zeros(T, N + 2, 2, N + 2, 2, L, L)
 
-    gpufun = gpu ? cu : identity
+    for i in 1:L
+        for xi in 1:2
+            for ni in 1:N+2
+                if xi == 1
+                    Hseq[ni, xi, i] = T(H[q, i])
+                else
+                    if ni < 2 || ni > N + 1
+                        Hseq[ni, xi, i] = T(0)
+                    else
+                        Hseq[ni, xi, i] = T(H[intseq[ni-1], i])
+                    end
+                end
+            end
+        end
+    end
+    # case xi == xj == 1
+    for i in 1:L
+        for j in 1:L
+            for ni in 1:N+2
+                for nj in 1:N+2
+                    Jseq[nj, 1, ni, 1, j, i] = T(J[q, q, j, i])
+                end
+            end
+        end
+    end
+
+    # case xj == 1 xi == 2 
+    for i in 1:L
+        for j in 1:L
+            for ni in 2:N+1
+                for nj in 1:N+2
+                    Jseq[nj, 1, ni, 2, j, i] = T(J[q, intseq[ni-1], j, i])
+                end
+            end
+        end
+    end
+    # case xj == 2 xi == 1
+    for i in 1:L
+        for j in 1:L
+            for ni in 1:N+2
+                for nj in 2:N+1
+                    Jseq[nj, 2, ni, 1, j, i] = T(J[intseq[nj-1], q, j, i])
+                end
+            end
+        end
+    end
+
+    # case xj == 2 xi == 2
+    @time for i in 1:L
+        for j in 1:L
+            for ni in 2:N+1
+                for nj in 2:N+1
+                    Jseq[nj, 2, ni, 2, j, i] = T(J[intseq[nj-1], intseq[ni-1], j, i])
+                end
+            end
+        end
+    end
 
     F = rand(T, N + 2, 2, L) # forward message, from variable to factor
     B = rand(T, N + 2, 2, L)  # backward message, from variable to factor
@@ -91,11 +156,27 @@ function BPMessages(L::Int, N::Int; gpu::Bool = true, T::DataType = Float32)
             end
         end
     end
-    T3 = typeof(F |> gpufun)
-    T2 = typeof(scra |> gpufun)
-    return BPMessages{T2,T3}(F |> gpufun, B |> gpufun, hF |> gpufun, hB |> gpufun, scra |> gpufun)
+
+    rF = F |> gpufun
+    rB = B |> gpufun
+    rhB = hB |> gpufun
+    rhF = hF |> gpufun
+    rscra = scra |> gpufun
+    rJseq = Jseq |> gpufun
+    rHseq = Hseq |> gpufun
+
+    T2 = typeof(rscra)
+    T3 = typeof(rF)
+    T6 = typeof(rJseq)
+    return BPMessages{T2,T3,T6}(rF, rB, rhF, rhB, rscra, rHseq, rJseq)
 end
 
+function Base.show(io::IO, x::BPMessages)
+    n, _, L = size(x.F)
+    N = n - 2
+    isgpu = typeof(x.F) <: CuArray
+    println(io, "BPMessages{$(eltype(x.F))}[L=$L N=$N ongpu=$isgpu]")
+end
 
 struct BPBeliefs{T3,T5,T6}
     beliefs::T3
@@ -104,7 +185,7 @@ struct BPBeliefs{T3,T5,T6}
     conditional::T6
 end
 
-function BPBeliefs(N, L; gpu::Bool = true, T::DataType = Float32)
+function BPBeliefs(N::Int, L::Int; gpu::Bool = true, T::DataType = Float32)
     gpufun = gpu ? cu : identity
 
     beliefs = rand(T, N + 2, 2, L)
@@ -158,7 +239,7 @@ struct LongRangeFields{T3,T5}
     g::T5
 end
 
-function LongRangeFields(N, L; gpu::Bool = true, T::DataType = Float32)
+function LongRangeFields(N::Integer, L::Integer; gpu::Bool = true, T::DataType = Float32) 
     gpufun = gpu ? cu : identity
 
     f = zeros(T, N + 2, 2, L)
