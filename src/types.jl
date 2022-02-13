@@ -34,21 +34,42 @@ function Base.show(io::IO, x::Seq)
     #print_with_color(:cyan,io,x.strseq)
     println(io, x.strseq)
 end
-struct ParamAlgo
-    damp::Float64
-    tol::Float64
-    tolnorm::Float64
+
+const allowed_upschemes = [:random,:sequential]
+const allowed_lrs = [:sce,:mf]
+mutable struct ParamAlgo{T<:AbstractFloat}
+    damp::T
+    tol::T
+    tolnorm::T
     tmax::Int
-    upscheme::Symbol
-    lr::Symbol
-    beta::Float64
+    upscheme::Symbol # :random or :sequential
+    lr::Symbol  # :sce or :mf 
+    beta::T
     verbose::Bool
+    function ParamAlgo(damp::T, tol::T,tolnorm::T, tmax::Int, upscheme::Symbol, lr::Symbol, beta::T, verbose::Bool) where {T<:AbstractFloat}
+        upscheme in allowed_upschemes || error("only upscheme ∈ $allowed_upschemes allowed")
+        lr in allowed_lrs || error("only lr ∈ $allowed_lrs allowed")
+        return new{T}(damp, tol,tolnorm, tmax, upscheme, lr, beta, verbose)
+    end
 end
 
-function Base.show(io::IO, x::ParamAlgo)
+function Base.show(io::IO, x::ParamAlgo{T}) where {T<:AbstractFloat}
+    println(typeof(x))
+    println("-------------")
     for i in fieldnames(ParamAlgo)
         println(i, "=", getfield(x, i))
     end
+    println("-------------")
+end
+
+function ParamAlgo{RT}(x::ParamAlgo{T}) where {T<:AbstractFloat, RT<:AbstractFloat}  
+    RT === T && return x
+    return ParamAlgo(RT(x.damp), RT(x.tol),RT(x.tolnorm), x.tmax, x.upscheme, x.lr, RT(x.beta), x.verbose)
+end
+
+function Base.convert(::Type{RT},x::ParamAlgo{T}) where {RT <: ParamAlgo, T<:AbstractFloat}
+    x isa RT && return x
+    return RT(x)
 end
 struct ParamModel{T}
     N::Int
