@@ -34,7 +34,6 @@ function Base.show(io::IO, x::Seq)
     #print_with_color(:cyan,io,x.strseq)
     println(io, x.strseq)
 end
-
 struct ParamAlgo
     damp::Float64
     tol::Float64
@@ -45,12 +44,12 @@ struct ParamAlgo
     beta::Float64
     verbose::Bool
 end
+
 function Base.show(io::IO, x::ParamAlgo)
     for i in fieldnames(ParamAlgo)
         println(i, "=", getfield(x, i))
     end
 end
-
 struct ParamModel{T}
     N::Int
     L::Int
@@ -64,7 +63,7 @@ struct ParamModel{T}
 end
 
 function Base.show(io::IO, x::ParamModel{T}) where {T}
-    q, L  = size(x.H)
+    q, L = size(x.H)
     println(io, "ParamModel{$(eltype(x.H))}[L=$(x.L) N=$(x.N) q=$(x.q)]")
 end
 
@@ -78,7 +77,7 @@ struct BPMessages{T2,T3,T6}
     Jseq::T6
 end
 
-function BPMessages(seq::Seq, para::ParamModel; T = Float32, ongpu=true)
+function BPMessages(seq::Seq, para::ParamModel; T = Float32, ongpu = true)
     @extract seq:intseq
     @extract para:J H q
     L = size(H, 2)
@@ -237,11 +236,22 @@ function BPBeliefs(N::Int, L::Int; gpu::Bool = true, T::DataType = Float32)
     #     end
     # end
 
-    T3 = typeof(beliefs |> gpufun)
-    T5 = typeof(joint_chain |> gpufun)
-    T6 = typeof(conditional |> gpufun)
+    rbeliefs = beliefs |> gpufun
+    rbeliefs_old = beliefs_old |> gpufun
+    rjoint_chain = joint_chain |> gpufun
+    rconditional = conditional |> gpufun
+    T3 = typeof(rbeliefs)
+    T5 = typeof(rjoint_chain)
+    T6 = typeof(rconditional)
 
-    BPBeliefs{T3,T5,T6}(beliefs |> gpufun, beliefs_old |> gpufun, joint_chain |> gpufun, conditional |> gpufun)
+    return BPBeliefs{T3,T5,T6}(rbeliefs, rbeliefs_old, joint_chain, rconditional)
+end
+
+function Base.show(io::IO, x::BPBeliefs)
+    isgpu = typeof(x.beliefs) <: CuArray
+    n, _, L = size(x.beliefs)
+    N = n - 2
+    print(io, "BPBeliefs{$(eltype(x.beliefs))}[L=$L N=$N ongpu=$isgpu]")
 end
 
 struct LongRangeFields{T3,T5}
@@ -249,8 +259,8 @@ struct LongRangeFields{T3,T5}
     g::T5
 end
 
-function LongRangeFields(N::Integer, L::Integer; gpu::Bool = true, T::DataType = Float32) 
-    gpufun = gpu ? cu : identity
+function LongRangeFields(N::Integer, L::Integer; ongpu::Bool = true, T::DataType = Float32)
+    gpufun = ongpu ? cu : identity
 
     f = zeros(T, N + 2, 2, L)
     g = zeros(T, N + 2, 2, N + 2, 2, L)
@@ -262,8 +272,29 @@ function LongRangeFields(N::Integer, L::Integer; gpu::Bool = true, T::DataType =
     LongRangeFields{RT3,RT5}(rf, rg)
 end
 
-struct allFields{T2,T3,T5,T6}
-    bpm::BPMessages{T2,T3}
-    bel::BPBeliefs{T3,T5,T6}
-    lrf::LongRangeFields{T3,T5}
+function Base.show(io::IO, x::LongRangeFields)
+    isgpu = typeof(x.f) <: CuArray
+    n, _, L = size(x.f)
+    N = n - 2
+    print(io, "LongRangeFields{$(eltype(x.f))}[L=$L N=$N ongpu=$isgpu]")
+end
+struct AllFields{T1,T2,T3}
+    bpm::T1
+    bpb::T2
+    lrf::T3
+    function AllFields(bpm::T1, bpb::T2, lrf::T3) where {T1<:BPMessages,T2<:BPBeliefs,T3<:LongRangeFields}
+        isgpu(x) = typeof(x) <: CuArray
+        isgpubpm = isgpu(bpm.B)
+        isgpubpb = isgpu(bpb.beliefs)
+        isgpulrf = isgpu(lrf.f)
+        isgpubpm == isgpubpb == isgpulrf || error("all fields should be either on gpu or on cpu")
+        return new{T1,T2,T3}(bpm,bpb,lrf)
+    end
+end
+
+function Base.show(io::IO, x::AllFields)
+    isgpu = typeof(x.bpm.B) <: CuArray
+    n, _, L = size(x.lrf.f)
+    N = n-2
+    print(io, "AllFields{$(eltype(x.bpm.B))}[L=$L N=$N ongpu=$isgpu]")
 end
