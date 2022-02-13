@@ -10,3 +10,14 @@ function letter2num(c::Union{Char,UInt8}, ctype::Symbol)
         error("only :amino and :nbase defined")
     end
 end
+
+function init_fields(J, H, seq)
+    q, q, L, L = size(J)
+    N = length(seq.intseq)
+    param = ParamModel(N, L, q, 0.1, 0.2, rand(L), rand(L), H, J)
+    bpm = BPMessages(seq, param)
+    bpb = BPBeliefs(N, L)
+    lrf = LongRangeFields(N, L)
+    af = AllFields(bpm, bpb, lrf)
+    return param,af
+end

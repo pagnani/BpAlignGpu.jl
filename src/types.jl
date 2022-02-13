@@ -155,7 +155,7 @@ function BPMessages(seq::Seq, para::ParamModel; T = Float32, ongpu = true)
     end
 
     # case xj == 2 xi == 2
-    @time for i in 1:L
+    for i in 1:L
         for j in 1:L
             for ni in 2:N+1
                 for nj in 2:N+1
