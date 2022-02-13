@@ -45,6 +45,11 @@ struct ParamAlgo
     beta::Float64
     verbose::Bool
 end
+function Base.show(io::IO, x::ParamAlgo)
+    for i in fieldnames(ParamAlgo)
+        println(i, "=", getfield(x, i))
+    end
+end
 
 struct ParamModel{T}
     N::Int
@@ -56,6 +61,11 @@ struct ParamModel{T}
     lambda_e::Vector{T}
     H::Matrix{T}
     J::Array{T,4}
+end
+
+function Base.show(io::IO, x::ParamModel{T}) where {T}
+    q, L  = size(x.H)
+    println(io, "ParamModel{$(eltype(x.H))}[L=$(x.L) N=$(x.N) q=$(x.q)]")
 end
 
 struct BPMessages{T2,T3,T6}
