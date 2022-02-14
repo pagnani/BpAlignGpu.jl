@@ -7,5 +7,6 @@ export BPMessages, BPBeliefs, LongRangeFields, AllFields, Seq, ParamModel, Param
 
 include("types.jl")
 include("tullio_functions.jl")
+include("bpupdate.jl")
 include("utils.jl")
 end

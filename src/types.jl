@@ -88,7 +88,7 @@ function Base.show(io::IO, x::ParamModel{T}) where {T}
     println(io, "ParamModel{$(eltype(x.H))}[L=$(x.L) N=$(x.N) q=$(x.q)]")
 end
 
-struct BPMessages{T2,T3,T6}
+struct BPMessages{T1,T2,T3,T6}
     F::T3
     B::T3
     hF::T3
@@ -96,11 +96,13 @@ struct BPMessages{T2,T3,T6}
     scra::T2
     Hseq::T3
     Jseq::T6
+    lambda_e::T1
+    lambda_o::T1
 end
 
 function BPMessages(seq::Seq, para::ParamModel; T = Float32, ongpu = true)
     @extract seq:intseq
-    @extract para:J H q
+    @extract para:J H q lambda_o lambda_e
     L = size(H, 2)
     N = length(intseq)
     gpufun = ongpu ? cu : identity
@@ -194,11 +196,14 @@ function BPMessages(seq::Seq, para::ParamModel; T = Float32, ongpu = true)
     rscra = scra |> gpufun
     rJseq = Jseq |> gpufun
     rHseq = Hseq |> gpufun
+    rlambda_e = lambda_e |> gpufun
+    rlambda_o = lambda_o |> gpufun
 
+    T1 = typeof(rlamda_e)    
     T2 = typeof(rscra)
     T3 = typeof(rF)
     T6 = typeof(rJseq)
-    return BPMessages{T2,T3,T6}(rF, rB, rhF, rhB, rscra, rHseq, rJseq)
+    return BPMessages{T1,T2,T3,T6}(rF, rB, rhF, rhB, rscra, rHseq, rJseq,rlambda_e,rlambda_o)
 end
 
 function Base.show(io::IO, x::BPMessages)
