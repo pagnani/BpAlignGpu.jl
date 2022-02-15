@@ -74,6 +74,7 @@ function update_hF!(af::AllFields, pm::ParamModel)
     @extract pm:N
     #println(typeof(lambda_e), " ", typeof(Jseq), " ",typeof(g), " ",typeof(F), " ",typeof(hF))
     @tullio hF[ni, xi, i+1] = χsr(nim1, xim1, ni, xi, N, lambda_o[i], lambda_e[i]) * exp(Jseq[nim1, xim1, ni, xi, i, i+1] + g[nim1, xim1, ni, xi, i]) * F[nim1, xim1, i]
+    return nothing
 end
 
 
@@ -108,6 +109,7 @@ function update_hB!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     @extract pa:damp
     #println(typeof(lambda_e), " ", typeof(Jseq), " ",typeof(g), " ",typeof(F), " ",typeof(hF))
     @tullio hB[ni, xi, i] = damp * hB[ni, xi, i] + (1 - damp) * χsr(nim1, xim1, ni, xi, N, lambda_o[i], lambda_e[i]) * exp(Jseq[nim1, xim1, ni, xi, i, i+1] + g[nim1, xim1, ni, xi, i]) * B[nim1, xim1, i+1]
+    return nothing
 end
 
 (normalize_3tensor!(ten::AbstractArray{T,3}) where T<:AbstractFloat) = ten .= ten ./ sum(ten, dims = (1, 2))
