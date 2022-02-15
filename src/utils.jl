@@ -11,13 +11,14 @@ function letter2num(c::Union{Char,UInt8}, ctype::Symbol)
     end
 end
 
-function init_fields(J, H, seq)
+function init_fields(J, H, seq; T::DataType=Float32)
     q, q, L, L = size(J)
     N = length(seq.intseq)
     param = ParamModel(N, L, q, 0.1, 0.2, rand(L), rand(L), H, J)
+    param = convert(ParamModel{T},param)
     bpm = BPMessages(seq, param)
     bpb = BPBeliefs(N, L)
     lrf = LongRangeFields(N, L)
     af = AllFields(bpm, bpb, lrf)
-    return param,af
+    return param, af
 end

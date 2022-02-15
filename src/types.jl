@@ -83,6 +83,16 @@ struct ParamModel{T}
     J::Array{T,4}
 end
 
+function ParamModel{RT}(x::ParamModel{T}) where {RT <: AbstractFloat,T <: AbstractFloat}
+    RT === T && return x
+    return ParamModel(x.N, x.L, x.q, RT(x.muint), RT(x.muext), Vector{RT}(x.lambda_o), Vector{RT}(x.lambda_e), Matrix{RT}(x.H), Array{RT,4}(x.J))
+end
+
+function Base.convert(::Type{RT},x::ParamModel{T}) where {RT<:ParamModel,T<:AbstractFloat}
+    x isa RT && return x
+    return RT(x) 
+end
+
 function Base.show(io::IO, x::ParamModel{T}) where {T}
     q, L = size(x.H)
     println(io, "ParamModel{$(eltype(x.H))}[L=$(x.L) N=$(x.N) q=$(x.q)]")
@@ -199,7 +209,7 @@ function BPMessages(seq::Seq, para::ParamModel; T = Float32, ongpu = true)
     rlambda_e = lambda_e |> gpufun
     rlambda_o = lambda_o |> gpufun
 
-    T1 = typeof(rlamda_e)    
+    T1 = typeof(rlambda_e)    
     T2 = typeof(rscra)
     T3 = typeof(rF)
     T6 = typeof(rJseq)
