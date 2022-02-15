@@ -110,8 +110,8 @@ function update_hB!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     @tullio hB[ni, xi, i] = damp * hB[ni, xi, i] + (1 - damp) * χsr(nim1, xim1, ni, xi, N, lambda_o[i], lambda_e[i]) * exp(Jseq[nim1, xim1, ni, xi, i, i+1] + g[nim1, xim1, ni, xi, i]) * B[nim1, xim1, i+1]
 end
 
-(normalize_3tensor!(ten::AbstractArray{T,3}) where T<:AbstractArray) = ten .= ten ./ sum(ten, dims = (1, 2))
-(normalize_5tensor!(ten::AbstractArray{T,5}) where T<:AbstractArray) = ten .= ten ./ sum(ten, dims = (1, 2,3,4))
+(normalize_3tensor!(ten::AbstractArray{T,3}) where T<:AbstractFloat) = ten .= ten ./ sum(ten, dims = (1, 2))
+(normalize_5tensor!(ten::AbstractArray{T,5}) where T<:AbstractFloat) = ten .= ten ./ sum(ten, dims = (1, 2, 3, 4))
 
 function one_bp_sweep!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     update_F!(af, pm)
@@ -119,5 +119,4 @@ function one_bp_sweep!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     update_B!(af, pm)
     update_hB!(af, pm, pa)
     normalize_fields!(af)
-
 end
