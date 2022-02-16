@@ -252,25 +252,13 @@ function BPBeliefs(N::Int, L::Int; gpu::Bool = true, T::DataType = Float32)
         end
     end
 
-    # for i in 1:L
-    #     for j in 1:L
-    #         for xi in 1:2
-    #             for ni in 1:N+2
-    #                 for xj in 1:2
-    #                     for nj in 1:N+2
-    #                         if i == j
-    #                             if xi == xj && ni == nj
-    #                                 conditional[nj, xj, ni, xi, j, i] = T(1)
-    #                             else
-    #                                 conditional[nj, xj, ni, xi, j, i] = T(0)
-    #                             end
-    #                         end
-    #                     end
-    #                 end
-    #             end
-    #         end
-    #     end
-    # end
+    for i in 1:L
+        for xi in 1:2
+            for ni in 1:N+2
+                conditional[ni, xi, ni, xi, i, i] = T(1)
+            end
+        end
+    end
 
     rbeliefs = beliefs |> gpufun
     rbeliefs_old = beliefs_old |> gpufun
@@ -298,8 +286,8 @@ end
 function LongRangeFields(N::Integer, L::Integer; ongpu::Bool = true, T::DataType = Float32)
     gpufun = ongpu ? cu : identity
 
-    f = zeros(T, N + 2, 2, L)
-    g = zeros(T, N + 2, 2, N + 2, 2, L)
+    f = rand(T, N + 2, 2, L)
+    g = rand(T, N + 2, 2, N + 2, 2, L)
 
     rf = f |> gpufun
     rg = g |> gpufun

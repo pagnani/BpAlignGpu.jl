@@ -6,7 +6,7 @@ using ExtractMacro: @extract
 export BPMessages, BPBeliefs, LongRangeFields, AllFields, Seq, ParamModel, ParamAlgo
 
 include("types.jl")
-include("tullio_functions.jl")
 include("bpupdate.jl")
+include("newfun_bpupdate.jl")
 include("utils.jl")
 end
