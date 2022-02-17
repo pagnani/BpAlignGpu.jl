@@ -54,3 +54,27 @@ function update_conditional_all_forloop!(af::AllFields, pm::ParamModel)
 
     return C
 end
+
+function andrea!(af::AllFields, pm::ParamModel)
+    @extract af : bpb
+    @extract bpb : conditional
+    @extract pm : L N
+    
+    for i=1:L-2
+        for j = i+1:L-1
+            #@tullio C[ni, xi, nj, xj, i, j+1] = conditional[ni, xi, n, x, i, j] * conditional[n, x, nj, xj, j,j+1]
+            C1 = view(conditional, :, :, :, :, i, j)
+            C2 = view(conditional, :, :, :, :, j, j + 1)
+            conditional[:, :, :, :, i, j+1] .= reshape(reshape(C1, 2(N + 2), 2(N + 2)) * reshape(C2, 2(N + 2), 2(N + 2)), N + 2, 2, N + 2, 2)
+        end
+    end    
+    for j=1:L-2
+        for i = j+1:L-1
+            #@tullio C[ni, xi, nj, xj, i+1, j] = conditional[ni, xi, n, x, i+1, i] * conditional[n, x, nj, xj, i, j]
+            C1 = view(conditional, :, :, :, :, i + 1, i)
+            C2 = view(conditional, :, :, :, :, i, j)
+            conditional[:, :, :, :, i+1, j] .= reshape(reshape(C1, 2(N + 2), 2(N + 2)) * reshape(C2, 2(N + 2), 2(N + 2)), N + 2, 2, N + 2, 2)
+        end
+    end
+    return nothing
+end
