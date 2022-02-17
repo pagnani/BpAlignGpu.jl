@@ -28,10 +28,29 @@ function update_conditional_all!(af::AllFields, pm::ParamModel)
     CR = fill(0.0, N+2, 2, N+2, 2, L, L) |> cu
     CL = fill(0.0, N+2, 2, N+2, 2, L, L) |> cu
 
-    @tullio CR[ni, xi, njp1, xjp1, i, j+1] = (1<=i<=L-2 && j>=i+1 ) ? (conditional[ni, xi, nj, xj, i, j] * conditional[nj, xj, njp1, xjp1, j,j+1]) : 0.0
-#    @tullio CR[ni, xi, nj, xj, i, j] = (1<=i<=L-2 && j>=i+2 && j>1) ? (conditional[ni, xi, njm1, xjm1, i, j-1] * conditional[njm1, xjm1, nj, xj, j-1,j]) : 0.0
+    @tullio CR[ni, xi, nj, xj, i, j+1] = (1<=i<=L-2 && i+1<=j<L ) ? (conditional[ni, xi, n, x, i, j] * conditional[n, x, nj, xj, j,j+1]) : 0.0
 
-    @tullio CL[nip1, xip1, nj, xj, i+1, j] = (1<=j<=L-2 && i>=j+1 ) ? (conditional[nip1, xip1, ni, xi, i+1,i] * conditional[ni, xi, nj, xj, i,j]) : 0.0
-    #conditional = conditional .+ CR .+ CL
+    @tullio CL[ni, xi, nj, xj, i+1, j] = (1<=j<=L-2 && j+1<=i<L ) ? (conditional[ni, xi, n, x, i+1,i] * conditional[n, x, nj, xj, i,j]) : 0.0
+
     return CR, CL
+end
+
+function update_conditional_all_forloop!(af::AllFields, pm::ParamModel)
+    @extract af : bpb
+    @extract bpb : conditional
+    @extract pm : L N
+    
+    C = fill(0.0, N+2, 2, N+2, 2, L, L) |> cu
+    for i=1:L-2
+        for j=i+1:L-1
+            @tullio C[ni, xi, nj, xj, i, j+1] = conditional[ni, xi, n, x, i, j] * conditional[n, x, nj, xj, j,j+1]
+        end
+    end    
+    for j=1:L-2
+        for i=j+1:L-1
+            @tullio C[ni, xi, nj, xj, i+1, j] = conditional[ni, xi, n, x, i+1,i] * conditional[n, x, nj, xj, i,j]
+        end
+    end
+
+    return C
 end

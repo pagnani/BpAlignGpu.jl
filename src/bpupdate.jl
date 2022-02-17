@@ -80,10 +80,10 @@ function update_hB!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     @extract bpm:Jseq B hB lambda_e lambda_o
     @extract pm:N
     @extract pa:damp
-    T = typeof(lambda_e[1])
+
     @tullio hB[ni, xi, i] = χsr(ni, xi, nip1, xip1, N, lambda_o[i+1], lambda_e[i+1]) * exp(Jseq[ni, xi, nip1, xip1, i, i+1] + g[ni, xi, nip1, xip1, i]) * B[nip1, xip1, i+1]
-    hB[1,2,:] .= T(0.0)
-    hB[N+2,2,:] .= T(0.0)
+    hB[1,2,:] .= 0.0
+    hB[N+2,2,:] .= 0.0
     return nothing
 end
 

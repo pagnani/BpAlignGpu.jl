@@ -64,7 +64,7 @@ function SCE_update_conditional_chain!(i, conditional, joint_chain, tolnorm, N)
     end
     sum(isnan.(conditional[:,:,i,i+1])) > 0 && println("NaNs in sr conditional[:,:,$i,$(i+1)]")
     sum(isnan.(conditional[:,:,i+1,i])) > 0 && println("NaNs in sr conditional[:,:,$(i+1),$i]")
-    return nothing
+    return conditional
 end
 
 
