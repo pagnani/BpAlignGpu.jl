@@ -1,7 +1,7 @@
 insertioncost(Δn,i, lambda_o, lambda_e) = (Δn > 0)*(lambda_o[i] + lambda_e[i]*(Δn - 1.0))
 
 #update hF[:,i]
-function SCE_update_hF!(i, F, damp, beta, tolnorm, g, lambda_o, lambda_e, N, elts_Jseq)
+function SCE_update_hF!(hF, i, F, damp, beta, tolnorm, g, lambda_o, lambda_e, N, elts_Jseq)
     new_M = fill(0.0, 2N+4)
 
     fill!(new_M, 0.0)
@@ -33,10 +33,30 @@ function SCE_update_hF!(i, F, damp, beta, tolnorm, g, lambda_o, lambda_e, N, elt
             new_M[N+3+ni] += exp( -beta*inscost + beta*elts_Jseq[N+3+n,N+3+ni,i-1,i] + beta*g[N+3+n,N+3+ni,i-1] )*F[N+3+n, i-1]
         end
     end
-    return new_M
+    #@assert sum(view(hF,:,i)) ≈ 1
+    
+    S = sum(new_M)
+    if S < tolnorm
+        println("hF[:, $i]: sum(new_M)=$S")
+    end
+    new_M ./=S
+    
+    #hF[:,i] .= (hF[:,i].^damp).*(new_M[:].^(1.0-damp))
+    hF[:,i] .= (hF[:,i].*damp) .+ (new_M[:].*(1.0-damp))
+
+    #normalize
+    S = sum(view(hF,:,i))
+    if S < tolnorm
+        println("sum(hF[:,$i])=$S")
+    end
+    for y=1:2N+4
+        hF[y,i] /= S
+    end
+    
+    return nothing
 end
 
-function SCE_update_F!(i, damp, beta, tolnorm, hF, f, muext, muint, N, elts_Hseq)
+function SCE_update_F!(F, i, damp, beta, tolnorm, hF, f, muext, muint, N, elts_Hseq)
     new_M = fill(0.0, 2N+4)
     
     if i==1
@@ -58,12 +78,30 @@ function SCE_update_F!(i, damp, beta, tolnorm, hF, f, muext, muint, N, elts_Hseq
         end
         new_M[2N+4]=0.0
     end
+    #@assert sum(view(F,:,i)) ≈ 1
+    
+    S = sum(new_M)
+    if S < tolnorm
+        println("F[:, $i]: sum(new_M)=$S")
+    end
+    new_M ./=S
 
-    return new_M
+    #    F[:,i] .= (F[:,i].^damp).*(new_M[:].^(1.0-damp))
+    F[:,i] .= (F[:,i].*damp) .+ (new_M[:].*(1.0-damp))
+    
+    #normalize
+    S = sum(view(F,:,i))
+    if S < tolnorm
+        println("sum(F[:,$i])=$S")
+    end
+    for y=1:2N+4
+        F[y,i] /= S
+    end
+    return nothing
 end
 
 #update hB[:,i]
-function SCE_update_hB!(i, damp, beta, tolnorm, B, g, lambda_o, lambda_e, N, elts_Jseq)
+function SCE_update_hB!(hB, i, damp, beta, tolnorm, B, g, lambda_o, lambda_e, N, elts_Jseq)
     new_M = fill(0.0, 2N+4)
     
     #forbidden states (x_i,n_i)=(1,0) and (x_i,n_i)=(1,N+1)
@@ -102,11 +140,30 @@ function SCE_update_hB!(i, damp, beta, tolnorm, B, g, lambda_o, lambda_e, N, elt
     # x=1, n=N
     new_M[2N+3] = exp( beta*elts_Jseq[2N+3, N+1, i, i+1] + beta*g[2N+3, N+1, i] )*B[N+1,i+1] 
     new_M[2N+3] += exp( beta*elts_Jseq[2N+3, N+2, i, i+1] + beta*g[2N+3, N+2, i])*B[N+2,i+1]
+
+    #@assert sum(view(hF,:,i)) ≈ 1
     
-    return new_M
+    S = sum(new_M)
+    if S < tolnorm
+        println("hB[:, $i]: sum(new_M)=$S")
+    end
+    new_M ./=S
+    
+    hB[:,i] .= (hB[:,i].*damp) .+ (new_M[:].*(1.0-damp))
+
+    #normalize
+    S = sum(view(hB,:,i))
+    if S < tolnorm
+        println("sum(hB[:,$i])=$S")
+    end
+    for y=1:2N+4
+        hB[y,i] /= S
+    end
+    
+    return nothing
 end
 
-function SCE_update_B!(i, damp, beta, tolnorm, hB, f, muext, muint, N, L, elts_Hseq)
+function SCE_update_B!(B, i, damp, beta, tolnorm, hB, f, muext, muint, N, L, elts_Hseq)
     new_M = fill(0.0, 2N+4)
     
     if i == L
@@ -129,7 +186,25 @@ function SCE_update_B!(i, damp, beta, tolnorm, hB, f, muext, muint, N, L, elts_H
         new_M[2N+4]=0.0
     end
 
-    return new_M
+    #@assert sum(view(B,:,i)) ≈ 1
+    
+    S = sum(new_M)
+    if S < tolnorm
+        println("B[:, $i]: sum(new_M)=$S")
+    end
+    new_M ./=S
+
+    B[:,i] .= (B[:,i].*damp) .+ (new_M[:].*(1.0-damp))
+    
+    #normalize
+    S = sum(view(B,:,i))
+    if S < tolnorm
+        println("sum(B[:,$i])=$S")
+    end
+    for y=1:2N+4
+        B[y,i] ./S
+    end
+    return nothing
 end
 
 
