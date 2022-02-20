@@ -138,9 +138,15 @@ function one_bp_sweep!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     update_hF!(af, pm, pa)
     update_B!(af, pm, pa)
     update_hB!(af, pm, pa)
-    
     update_beliefs!(af, pm)
     update_jointchain!(af, pm)
     update_conditional_chain!(af, pa)
     update_conditional_all!(af, pm)
+end
+
+function test_sweep!(n,af,pm,pa)
+    for _ in 1:n
+        one_bp_sweep!(af, pm, pa)
+    end
+    nothing
 end
