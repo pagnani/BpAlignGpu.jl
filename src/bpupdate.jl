@@ -1,4 +1,4 @@
-ϕ(Δn, lambda_oi, lambda_ei) = (Δn > 0) * (lambda_oi + lambda_ei * (Δn - 1.0))
+@inline ϕ(Δn, lambda_oi, lambda_ei) = (Δn > 0) * (lambda_oi + lambda_ei * (Δn - 1))
 
 function χsr(nim1, xim1, ni, xi, N, lambda_oi::T, lambda_ei::T) where {T<:AbstractFloat}
     myone = T(1.0)
@@ -14,7 +14,7 @@ function χsr(nim1, xim1, ni, xi, N, lambda_oi::T, lambda_ei::T) where {T<:Abstr
         end
     elseif xim1 == 1 && xi == 2
         if 1 <= nim1 < ni < N + 2
-            return T(exp(-ϕ(Δn, lambda_oi, lambda_ei) * (nim1 > 1)))
+            return exp(-ϕ(Δn, lambda_oi, lambda_ei) * (nim1 > 1))
         else
             return myzero
         end
