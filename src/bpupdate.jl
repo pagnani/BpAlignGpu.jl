@@ -142,11 +142,18 @@ function one_bp_sweep!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     update_jointchain!(af, pm)
     update_conditional_chain!(af, pa)
     update_conditional_all!(af, pm)
+    update_f!(af)
+    update_g!(af)
 end
 
 function test_sweep!(n,af,pm,pa)
-    for _ in 1:n
+    @extract af : bpb
+    @extract bpb : beliefs_old
+    for t in 1:n
+        beliefs_old .= af.bpb.beliefs
         one_bp_sweep!(af, pm, pa)
+        err = maximum(abs.(beliefs_old .- af.bpb.beliefs))
+        println("t=", t, "\t err=", err)
     end
     nothing
 end
