@@ -22,3 +22,74 @@ function init_fields(J, H, seq; T::DataType=Float32)
     af = AllFields(bpm, bpb, lrf)
     return param, af
 end
+
+function read_parameters(
+    filename::String,
+    q::Int,
+    L::Int;
+    gap::Int = 0,
+    typel::Symbol = :bm,
+)
+
+    if typel == :plm
+        @info "Assuming J a b i j and h a i format"
+    else
+        @info "Assuming J i j a b and h i a format"
+    end
+    @info "Output tersors: J[a b i j] and h[a i]"
+    @info "Gap in input file $gap now in $q"
+    J = zeros(q, q, L, L)
+    h = zeros(q, L)
+
+    if gap == q
+        offset = 0
+    else
+        offset = 1
+    end
+    open(filename) do file
+        for ln in eachline(file)
+            line = split(ln, ' ')
+            if occursin('J', ln)
+                if typel == :bm
+                    i = parse(Int64, line[2]) + offset
+                    j = parse(Int64, line[3]) + offset
+                    a = gap == q ? parse(Int64, line[4]) + offset :
+                        parse(Int64, line[4])
+                    b = gap == q ? parse(Int64, line[5]) + offset :
+                        parse(Int64, line[5])
+                else
+                    i = parse(Int64, line[4]) + offset
+                    j = parse(Int64, line[5]) + offset
+                    a = gap == q ? parse(Int64, line[2]) + offset :
+                        parse(Int64, line[2])
+                    b = gap == q ? parse(Int64, line[3]) + offset :
+                        parse(Int64, line[3])
+                end
+                if a == gap && gap == 0
+                    a = q
+                end
+                if b == gap && gap == 0
+                    b = q
+                end
+                J[a, b, i, j] = parse(Float64, line[6])
+                J[b, a, j, i] = parse(Float64, line[6])
+            end
+            if occursin('h', ln)
+                if typel == :bm
+                    i = parse(Int64, line[2]) + offset
+                    a = gap == q ? parse(Int64, line[3]) + offset :
+                        parse(Int64, line[3])
+                else
+                    i = parse(Int64, line[3]) + offset
+                    a = gap == q ? parse(Int64, line[2]) + offset :
+                        parse(Int64, line[2])
+                end
+                if a == gap && gap == 0
+                    a = q
+                end
+                h[a, i] = parse(Float64, line[4])
+            end
+        end
+    end
+    return J, h
+end
