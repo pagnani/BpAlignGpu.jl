@@ -1,22 +1,25 @@
-function update_beliefs!(af::AllFields, pm::ParamModel)
+function update_beliefs!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     @extract af : lrf bpm bpb
     @extract lrf : f
     @extract bpm : hF hB Hseq
     @extract bpb : beliefs
     @extract pm : N L muint muext
+    @extract pa : beta
     
-    @tullio beliefs[ni, xi, i] = ((i> 1) ? hF[ni, xi, i] : χin(ni, xi, N)) * ((i<L) ? hB[ni, xi, i] : χend(ni, xi, N)) * exp(Hseq[ni, xi, i] - (2 - xi) * mumask(muint, muext, ni, N) + f[ni, xi, i]) grad = false
+    @tullio beliefs[ni, xi, i] = ((i> 1) ? hF[ni, xi, i] : χin(ni, xi, N)) * ((i<L) ? hB[ni, xi, i] : χend(ni, xi, N)) * exp(beta*(Hseq[ni, xi, i] - (2 - xi) * mumask(muint, muext, ni, N) + f[ni, xi, i])) grad = false
     normalize_3tensor!(beliefs)
     return nothing
 end
 
-function update_jointchain!(af::AllFields, pm::ParamModel)
+function update_jointchain!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     @extract af : lrf bpm bpb
     @extract lrf : g
     @extract bpb : joint_chain
     @extract bpm : Jseq F B lambda_e lambda_o
     @extract pm : N
-    @tullio joint_chain[ni, xi, nip1, xip1, i] = χsr(ni, xi, nip1, xip1, N, lambda_o[i+1], lambda_e[i+1]) * exp(Jseq[ni, xi, nip1, xip1, i, i+1] + g[ni, xi, nip1, xip1, i]) * F[ni, xi, i] * B[nip1, xip1, i+1]
+    @extract pa : beta
+
+    @tullio joint_chain[ni, xi, nip1, xip1, i] = χsr(ni, xi, nip1, xip1, N, lambda_o[i+1], lambda_e[i+1], beta) * exp(beta*(Jseq[ni, xi, nip1, xip1, i, i+1] + g[ni, xi, nip1, xip1, i])) * F[ni, xi, i] * B[nip1, xip1, i+1]
     normalize_5tensor!(joint_chain)
     return nothing
 end

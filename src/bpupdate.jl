@@ -1,6 +1,6 @@
 @inline ϕ(Δn, lambda_oi, lambda_ei) = (Δn > 0) * (lambda_oi + lambda_ei * (Δn - 1))
 
-function χsr(nim1, xim1, ni, xi, N, lambda_oi::T, lambda_ei::T) where {T<:AbstractFloat}
+function χsr(nim1, xim1, ni, xi, N, lambda_oi::T, lambda_ei::T, beta::T) where {T<:AbstractFloat}
     myone = T(1.0)
     myzero = T(0.0)
     Δn = ni - nim1 - 1
@@ -14,13 +14,13 @@ function χsr(nim1, xim1, ni, xi, N, lambda_oi::T, lambda_ei::T) where {T<:Abstr
         end
     elseif xim1 == 1 && xi == 2
         if 1 <= nim1 < ni < N + 2
-            return exp(-ϕ(Δn, lambda_oi, lambda_ei) * (nim1 > 1))
+            return exp(-beta*ϕ(Δn, lambda_oi, lambda_ei) * (nim1 > 1))
         else
             return myzero
         end
     else
         if 1 < nim1 < ni < N + 2
-            return exp(-ϕ(Δn, lambda_oi, lambda_ei))
+            return exp(-beta*ϕ(Δn, lambda_oi, lambda_ei))
         else
             return myzero
         end
@@ -115,10 +115,10 @@ function update_hF!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     @extract lrf : g
     @extract bpm : Jseq F hF lambda_e lambda_o scra
     @extract pm : N
-    @extract pa : damp
+    @extract pa : damp beta
 
     fill!(scra, 0.0)
-    @tullio scra[ni, xi, i+1] = χsr(nim1, xim1, ni, xi, N, lambda_o[i+1], lambda_e[i+1]) * exp(Jseq[nim1, xim1, ni, xi, i, i+1] + g[nim1, xim1, ni, xi, i]) * F[nim1, xim1, i]
+    @tullio scra[ni, xi, i+1] = χsr(nim1, xim1, ni, xi, N, lambda_o[i+1], lambda_e[i+1], beta) * exp(beta*(Jseq[nim1, xim1, ni, xi, i, i+1] + g[nim1, xim1, ni, xi, i])) * F[nim1, xim1, i]
     normalize_3tensor!(scra)
     @tullio hF[ni, xi, i] = damp * hF[ni, xi, i] + (1-damp) * scra[ni, xi, i]
     normalize_3tensor!(hF)
@@ -127,14 +127,14 @@ function update_hF!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
 end
 
 function update_hB!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
-    @extract af:lrf bpm
-    @extract lrf:g
-    @extract bpm:Jseq B hB lambda_e lambda_o scra
-    @extract pm:N
-    @extract pa:damp
+    @extract af : lrf bpm
+    @extract lrf : g
+    @extract bpm : Jseq B hB lambda_e lambda_o scra
+    @extract pm : N
+    @extract pa : damp beta
 
     fill!(scra, 0.0)
-    @tullio scra[ni, xi, i] = χsr(ni, xi, nip1, xip1, N, lambda_o[i+1], lambda_e[i+1]) * exp(Jseq[ni, xi, nip1, xip1, i, i+1] + g[ni, xi, nip1, xip1, i]) * B[nip1, xip1, i+1]
+    @tullio scra[ni, xi, i] = χsr(ni, xi, nip1, xip1, N, lambda_o[i+1], lambda_e[i+1], beta) * exp(beta*(Jseq[ni, xi, nip1, xip1, i, i+1] + g[ni, xi, nip1, xip1, i])) * B[nip1, xip1, i+1]
     scra[1, 2, :] .= 0.0
     scra[N+2, 2, :] .= 0.0
     normalize_3tensor!(scra)
@@ -147,14 +147,14 @@ end
 @inline mumask(muint, muext, n, N) = 1 < n < N + 2 ? muint : muext
 
 function update_F!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
-    @extract af:lrf bpm
-    @extract lrf:f
-    @extract bpm:Hseq F hF scra
-    @extract pm:muint muext N
-    @extract pa:damp
+    @extract af : lrf bpm
+    @extract lrf : f
+    @extract bpm : Hseq F hF scra
+    @extract pm : muint muext N
+    @extract pa : damp beta
 
     fill!(scra, 0.0)
-    @tullio scra[ni, xi, i] = ((i > 1) ? hF[ni, xi, i] : χin(ni, xi, N)) * exp(Hseq[ni, xi, i] - (2 - xi) * mumask(muint, muext, ni, N) + f[ni, xi, i]) grad = false
+    @tullio scra[ni, xi, i] = ((i > 1) ? hF[ni, xi, i] : χin(ni, xi, N)) * exp(beta*(Hseq[ni, xi, i] - (2 - xi) * mumask(muint, muext, ni, N) + f[ni, xi, i])) grad = false
     normalize_3tensor!(scra)
     @tullio F[ni, xi, i] = damp * F[ni, xi, i] + (1 - damp) * scra[ni, xi, i]
     normalize_3tensor!(F)
@@ -163,14 +163,14 @@ function update_F!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
 end
 
 function update_B!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
-    @extract af:lrf bpm
-    @extract lrf:f
-    @extract bpm:Hseq B hB scra
-    @extract pm:muint muext N L
-    @extract pa:damp
+    @extract af : lrf bpm
+    @extract lrf : f
+    @extract bpm : Hseq B hB scra
+    @extract pm : muint muext N L
+    @extract pa : damp beta
 
     fill!(scra, 0.0)
-    @tullio scra[ni, xi, i] = ((i < L) ? hB[ni, xi, i] : χend(ni, xi, N)) * exp(Hseq[ni, xi, i] - (2 - xi) * mumask(muint, muext, ni, N) + f[ni, xi, i]) grad = false
+    @tullio scra[ni, xi, i] = ((i < L) ? hB[ni, xi, i] : χend(ni, xi, N)) * exp(beta*(Hseq[ni, xi, i] - (2 - xi) * mumask(muint, muext, ni, N) + f[ni, xi, i])) grad = false
     normalize_3tensor!(scra)
     @tullio B[ni, xi, i] = damp * B[ni, xi, i] + (1 - damp) * scra[ni, xi, i]
     normalize_3tensor!(B)
@@ -182,16 +182,20 @@ end
 (normalize_5tensor!(ten::AbstractArray{T,5}) where T<:AbstractFloat) = ten .= ten ./ sum(ten, dims = (1, 2, 3, 4))
 
 function one_bp_sweep!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
+    @extract pa : lr
+    
     update_F!(af, pm, pa)
     update_hF!(af, pm, pa)
     update_B!(af, pm, pa)
     update_hB!(af, pm, pa)
-    update_beliefs!(af, pm)
-    update_jointchain!(af, pm)
-    update_conditional_chain!(af, pa)
-    update_conditional_all!(af, pm)
-    update_f!(af)
-    update_g!(af)
+    update_beliefs!(af, pm, pa)
+    update_jointchain!(af, pm, pa)
+    if lr == :sce
+        update_conditional_chain!(af, pa)
+        update_conditional_all!(af, pm)
+        update_f!(af)
+        update_g!(af)
+    end
 end
 
 function test_sweep!(n,af,pm,pa)

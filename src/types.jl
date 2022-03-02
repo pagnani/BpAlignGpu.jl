@@ -36,14 +36,14 @@ function Base.show(io::IO, x::Seq)
 end
 
 const allowed_upschemes = [:random,:sequential]
-const allowed_lrs = [:sce,:mf]
+const allowed_lrs = [:sce,:mf,:sr]
 mutable struct ParamAlgo{T<:AbstractFloat}
     damp::T
     tol::T
     tolnorm::T
     tmax::Int
     upscheme::Symbol # :random or :sequential
-    lr::Symbol  # :sce or :mf 
+    lr::Symbol  # :sce or :sr or :mf 
     beta::T
     verbose::Bool
     function ParamAlgo(damp::T, tol::T,tolnorm::T, tmax::Int, upscheme::Symbol, lr::Symbol, beta::T, verbose::Bool) where {T<:AbstractFloat}
