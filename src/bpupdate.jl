@@ -51,8 +51,8 @@ function update_f2!(af::AllFields)
     @extract bpm:Jseq
 
 
-    CUDA.@time @tullio scra[ni, xi, nl, xl, i, l] := Jseq[ni, xi, nj, xj, i, j] * conditional[nj, xj, nl, xl, j, l] * (j > l)
-    CUDA.@time @tullio f[nl, xl, l] = -conditional[ni, xi, nl, xl, i, l] * scra[ni, xi, nl, xl, i, l] * (i < l)
+    @tullio scra[ni, xi, nl, xl, i, l] := Jseq[ni, xi, nj, xj, i, j] * conditional[nj, xj, nl, xl, j, l] * (j > l)
+    @tullio f[nl, xl, l] = -conditional[ni, xi, nl, xl, i, l] * scra[ni, xi, nl, xl, i, l] * (i < l)
     #@tullio f[nl, xl, l] = -conditional[ni, xi, nl, xl, i, l] * Jseq[ni, xi, nj, xj, i, j] * conditional[nj, xj, nl, xl, j, l] * (i < l) * (j > l)
     synchronize()
     return nothing
@@ -182,16 +182,16 @@ end
 (normalize_5tensor!(ten::AbstractArray{T,5}) where T<:AbstractFloat) = ten .= ten ./ sum(ten, dims = (1, 2, 3, 4))
 
 function one_bp_sweep!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
-    CUDA.@time update_F!(af, pm, pa)
-    CUDA.@time update_hF!(af, pm, pa)
-    CUDA.@time update_B!(af, pm, pa)
-    CUDA.@time update_hB!(af, pm, pa)
-    CUDA.@time update_beliefs!(af, pm)
-    CUDA.@time update_jointchain!(af, pm)
-    CUDA.@time update_conditional_chain!(af, pa)
-    CUDA.@time update_conditional_all!(af, pm)
-    CUDA.@time update_f!(af)
-    CUDA.@time update_g!(af)
+    update_F!(af, pm, pa)
+    update_hF!(af, pm, pa)
+    update_B!(af, pm, pa)
+    update_hB!(af, pm, pa)
+    update_beliefs!(af, pm)
+    update_jointchain!(af, pm)
+    update_conditional_chain!(af, pa)
+    update_conditional_all!(af, pm)
+    update_f!(af)
+    update_g!(af)
 end
 
 function test_sweep!(n,af,pm,pa)
@@ -202,6 +202,7 @@ function test_sweep!(n,af,pm,pa)
         one_bp_sweep!(af, pm, pa)
         err = maximum(abs.(beliefs_old .- af.bpb.beliefs))
         println("t=", t, "\t err=", err)
+        flush(stdout)
     end
     nothing
 end
