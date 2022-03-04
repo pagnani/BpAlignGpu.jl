@@ -10,7 +10,6 @@ export BPMessages, BPBeliefs, LongRangeFields, AllFields, Seq, ParamModel, Param
 include("dataset.jl") #copy-paste of DCAlign-master
 include("types.jl")
 include("bpupdate.jl")
-include("newfun_bpupdate.jl")
 include("utils.jl")
 include("computesol.jl")
 end
