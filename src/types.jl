@@ -238,7 +238,7 @@ function BPBeliefs(N::Int, L::Int; gpu::Bool = true, T::DataType = Float32)
     beliefs[2:N+2, 1, 1] .= T(0)
     #mynorm = sum(beliefs, dims = (1, 2))[:]
     beliefs_old = rand(T, N + 2, 2, L)
-    joint_chain = zeros(T, N + 2, 2, N + 2, 2, L)
+    joint_chain = ones(T, N + 2, 2, N + 2, 2, L)
     conditional = zeros(T, N + 2, 2, N + 2, 2, L, L)
 
 
