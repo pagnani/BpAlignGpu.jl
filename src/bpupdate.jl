@@ -174,7 +174,7 @@ function update_conditional_all!(af::AllFields, pm::ParamModel)
     return nothing
 end
 
-function update_f!(af::AllFields)
+function update_fold!(af::AllFields)
     @extract af:lrf bpb bpm
     @extract lrf:f
     @extract bpb:conditional
@@ -187,15 +187,24 @@ function update_f!(af::AllFields)
     return nothing
 end
 
-function update_fold!(af::AllFields)
+function update_f!(af::AllFields)
     @extract af:lrf bpb bpm
     @extract lrf:f
     @extract bpb:conditional
     @extract bpm:Jseq
+    np1 = size(conditional, 1)
+    L = size(conditional, 6)
 
-    @tullio f[nl, xl, l] = -conditional[ni, xi, nl, xl, i, l] * Jseq[ni, xi, nj, xj, i, j] * conditional[nj, xj, nl, xl, j, l] * (i < l) * (j > l)
+    mask = similar(conditional)
+    @tullio mask[ni, xi, nj, xj, i, j] = (i < j) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
+    mask = reshape(permutedims(mask, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+    J = reshape(permutedims(Jseq, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+    cond = reshape(permutedims(conditional, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+        
+    f .= reshape(diag(- (mask .* cond') * (J * (cond .* mask))), np1, 2, L)
+    #CUDA.@time @tullio fscra[nl, xl, l] := -conditional[ni, xi, nl, xl, i, l] * Jseq[ni, xi, nj, xj, i, j] * conditional[nj, xj, nl, xl, j, l] * (i < l) * (j > l)
     synchronize()
-   
+    return nothing
 end
 
 function update_g!(af::AllFields)
@@ -215,7 +224,6 @@ function update_gold!(af::AllFields)
     @extract lrf:g
     @extract bpb:conditional
     @extract bpm:Jseq
-
     @tullio g[nl, xl, nl1, xl1, l] = conditional[ni, xi, nl, xl, i, l] * Jseq[ni, xi, nj, xj, i, j] * conditional[nj, xj, nl1, xl1, j, l+1] * ((i <= l) * (j > l) * (j > i + 1))
     synchronize()
     return nothing
@@ -255,18 +263,18 @@ end
 function one_bp_sweep!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     @extract pa : lr
     
-    update_F!(af, pm, pa)
-    update_hF!(af, pm, pa)
-    update_B!(af, pm, pa)
-    update_hB!(af, pm, pa)
+    CUDA.@time update_F!(af, pm, pa)
+    CUDA.@time update_hF!(af, pm, pa)
+    CUDA.@time update_B!(af, pm, pa)
+    CUDA.@time update_hB!(af, pm, pa)
 
-    update_beliefs!(af, pm, pa)
-    update_jointchain!(af, pm, pa)
+    CUDA.@time update_beliefs!(af, pm, pa)
+    CUDA.@time update_jointchain!(af, pm, pa)
     if lr == :sce
-        update_conditional_chain!(af, pa)
-        update_conditional_all!(af, pm)
-        update_f!(af)
-        update_g!(af)
+        CUDA.@time update_conditional_chain!(af, pa)
+        CUDA.@time update_conditional_all!(af, pm)
+        CUDA.@time update_f!(af)
+        CUDA.@time update_g!(af)
     end
 end
 
