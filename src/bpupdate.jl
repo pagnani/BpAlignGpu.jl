@@ -212,9 +212,9 @@ function update_g!(af::AllFields)
     @extract lrf:g
     @extract bpb:conditional
     @extract bpm:Jseq
-
+    
     @tullio scra[nl, xl, nj, xj, j, l] := conditional[ni, xi, nl, xl, i, l] * Jseq[ni, xi, nj, xj, i, j] * ((i <= l) * (j > l) * (j > i + 1))
-    @tullio g[nl, xl, nl1, xl1, l] = scra[nl, xl, nj, xj, j, l] * conditional[nj, xj, nl1, xl1, j, l+1] * (j > l) 
+    @tullio g[nl, xl, nl1, xl1, l] = scra[nl, xl, nj, xj, j, l] * conditional[nj, xj, nl1, xl1, j, l+1] * (j > l)
     synchronize()
     return nothing
 end
@@ -224,9 +224,34 @@ function update_gold!(af::AllFields)
     @extract lrf:g
     @extract bpb:conditional
     @extract bpm:Jseq
-    @tullio g[nl, xl, nl1, xl1, l] = conditional[ni, xi, nl, xl, i, l] * Jseq[ni, xi, nj, xj, i, j] * conditional[nj, xj, nl1, xl1, j, l+1] * ((i <= l) * (j > l) * (j > i + 1))
+
+    np1 = size(conditional, 1)
+    L = size(conditional, 6)
+    maskL = similar(conditional)
+    maskC = similar(conditional)
+    maskR = similar(conditional)
+    @tullio maskL[ni, xi, nj, xj, i, j] = (i <= j) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
+    @tullio maskC[ni, xi, nj, xj, i, j] = (j > i + 1) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
+    @tullio maskR[ni, xi, nj, xj, i, j] = (i > j-1) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
+
+
+    maskL = reshape(permutedims(maskL, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+    maskC = reshape(permutedims(maskC, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+    maskR = reshape(permutedims(maskR, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+    J = reshape(permutedims(Jseq, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+    cond = reshape(permutedims(conditional, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+    scra = reshape((maskL .* cond') * ((J .* maskC) * (cond .* maskR)), np1, 2, np1, 2, L, L)
+    res = CUDA.zeros(np1, 2, np1, 2, L)
+
+
+    for i in 1:L-1
+        res[:, :, :, :, i] .= scra[:, :, :, :, i, i+1]
+    end
+
+    #@tullio g[nl, xl, nl1, xl1, l] = conditional[ni, xi, nl, xl, i, l] * Jseq[ni, xi, nj, xj, i, j] * conditional[nj, xj, nl1, xl1, j, l+1] * ((i <= l) * (j > l) * (j > i + 1))
     synchronize()
-    return nothing
+
+    return res
 end
 
 #(normalize_3tensor!(ten::AbstractArray{T,3}) where T<:AbstractFloat) = ten .= ten ./ sum(ten, dims = (1, 2))
@@ -272,8 +297,8 @@ function one_bp_sweep!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     if lr == :sce
         update_conditional_chain!(af, pa)
         update_conditional_all!(af, pm)
-        update_f!(af)
-        update_g!(af)
+        CUDA.@time update_f!(af)
+        CUDA.@time update_g!(af)
     end
 end
 
