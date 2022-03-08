@@ -232,15 +232,16 @@ function update_gold!(af::AllFields)
     maskR = similar(conditional)
     @tullio maskL[ni, xi, nj, xj, i, j] = (i <= j) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
     @tullio maskC[ni, xi, nj, xj, i, j] = (j > i + 1) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
-    @tullio maskR[ni, xi, nj, xj, i, j] = (i > j-1) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
+    #@tullio maskR[ni, xi, nj, xj, i, j] = (i > j-1) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
 
 
     maskL = reshape(permutedims(maskL, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
     maskC = reshape(permutedims(maskC, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
-    maskR = reshape(permutedims(maskR, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+    #maskR = reshape(permutedims(maskR, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
     J = reshape(permutedims(Jseq, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
     cond = reshape(permutedims(conditional, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
-    scra = reshape((maskL .* cond') * ((J .* maskC) * (cond .* maskR)), np1, 2, np1, 2, L, L)
+    scra = permutedims(reshape((maskL .* cond)' * ((J .* maskC) * (cond .* maskL')), np1, 2, L,np1, 2, L),(1,2,4,5,3,6))
+    @show size(scra)
     res = CUDA.zeros(np1, 2, np1, 2, L)
 
 
@@ -251,7 +252,7 @@ function update_gold!(af::AllFields)
     #@tullio g[nl, xl, nl1, xl1, l] = conditional[ni, xi, nl, xl, i, l] * Jseq[ni, xi, nj, xj, i, j] * conditional[nj, xj, nl1, xl1, j, l+1] * ((i <= l) * (j > l) * (j > i + 1))
     synchronize()
 
-    return res
+    return res, maskL,maskC,maskR
 end
 
 #(normalize_3tensor!(ten::AbstractArray{T,3}) where T<:AbstractFloat) = ten .= ten ./ sum(ten, dims = (1, 2))
