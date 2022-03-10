@@ -219,7 +219,11 @@ function Base.show(io::IO, x::BPMessages)
     n, _, L = size(x.F)
     N = n - 2
     isgpu = typeof(x.F) <: CuArray
-    println(io, "BPMessages{$(eltype(x.F))}[L=$L N=$N ongpu=$isgpu]")
+    totbytes = 0
+    for f in fieldnames(BPMessages)
+        totbytes  += sizeof(getfield(x,f))
+    end
+    println(io, "BPMessages{$(eltype(x.F))}[L=$L N=$N ongpu=$isgpu size=$(Base.format_bytes(totbytes))]")
 end
 
 struct BPBeliefs{T3,T5,T6}
@@ -274,7 +278,11 @@ function Base.show(io::IO, x::BPBeliefs)
     isgpu = typeof(x.beliefs) <: CuArray
     n, _, L = size(x.beliefs)
     N = n - 2
-    print(io, "BPBeliefs{$(eltype(x.beliefs))}[L=$L N=$N ongpu=$isgpu]")
+    totbytes = 0
+    for f in fieldnames(BPBeliefs)
+        totbytes  += sizeof(getfield(x,f))
+    end
+    print(io, "BPBeliefs{$(eltype(x.beliefs))}[L=$L N=$N ongpu=$isgpu size=$(Base.format_bytes(totbytes))]")
 end
 
 struct LongRangeFields{T3,T5}
@@ -299,7 +307,11 @@ function Base.show(io::IO, x::LongRangeFields)
     isgpu = typeof(x.f) <: CuArray
     n, _, L = size(x.f)
     N = n - 2
-    print(io, "LongRangeFields{$(eltype(x.f))}[L=$L N=$N ongpu=$isgpu]")
+    totbytes = 0
+    for f in fieldnames(LongRangeFields)
+        totbytes += sizeof(getfield(x, f))
+    end
+    print(io, "LongRangeFields{$(eltype(x.f))}[L=$L N=$N ongpu=$isgpu size=$(Base.format_bytes(totbytes))]")
 end
 struct AllFields{T1,T2,T3}
     bpm::T1
@@ -318,6 +330,14 @@ end
 function Base.show(io::IO, x::AllFields)
     isgpu = typeof(x.bpm.B) <: CuArray
     n, _, L = size(x.lrf.f)
-    N = n-2
-    print(io, "AllFields{$(eltype(x.bpm.B))}[L=$L N=$N ongpu=$isgpu]")
+    N = n - 2
+    totbytes = 0
+    for f in fieldnames(AllFields)
+        lt = getfield(x,f)
+        for g in fieldnames(typeof(lt))
+            totbytes+=sizeof(getfield(lt,g))
+        end
+    end
+
+    print(io, "AllFields{$(eltype(x.bpm.B))}[L=$L N=$N ongpu=$isgpu size=$(Base.format_bytes(totbytes))]")
 end
