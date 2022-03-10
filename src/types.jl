@@ -32,7 +32,7 @@ end
 function Base.show(io::IO, x::Seq)
     println(io, x.header)
     #print_with_color(:cyan,io,x.strseq)
-    println(io, x.strseq)
+    print(io, x.strseq)
 end
 
 const allowed_upschemes = [:random,:sequential]
@@ -59,7 +59,7 @@ function Base.show(io::IO, x::ParamAlgo{T}) where {T<:AbstractFloat}
     for i in fieldnames(ParamAlgo)
         println(i, "=", getfield(x, i))
     end
-    println("-------------")
+    print("-------------")
 end
 
 function ParamAlgo{RT}(x::ParamAlgo{T}) where {T<:AbstractFloat, RT<:AbstractFloat}  
@@ -95,7 +95,7 @@ end
 
 function Base.show(io::IO, x::ParamModel{T}) where {T}
     q, L = size(x.H)
-    println(io, "ParamModel{$(eltype(x.H))}[L=$(x.L) N=$(x.N) q=$(x.q)]")
+    print(io, "ParamModel{$(eltype(x.H))}[L=$(x.L) N=$(x.N) q=$(x.q)]")
 end
 
 struct BPMessages{T1,T3,T6}
@@ -223,7 +223,7 @@ function Base.show(io::IO, x::BPMessages)
     for f in fieldnames(BPMessages)
         totbytes  += sizeof(getfield(x,f))
     end
-    println(io, "BPMessages{$(eltype(x.F))}[L=$L N=$N ongpu=$isgpu size=$(Base.format_bytes(totbytes))]")
+    print(io, "BPMessages{$(eltype(x.F))}[L=$L N=$N ongpu=$isgpu size=$(Base.format_bytes(totbytes))]")
 end
 
 struct BPBeliefs{T3,T5,T6}
