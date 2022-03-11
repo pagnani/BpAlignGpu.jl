@@ -207,7 +207,7 @@ function update_f!(af::AllFields)
     return nothing
 end
 
-function update_g!(af::AllFields)
+function update_gold!(af::AllFields)
     @extract af:lrf bpb bpm
     @extract lrf:g
     @extract bpb:conditional
@@ -219,7 +219,7 @@ function update_g!(af::AllFields)
     return nothing
 end
 
-function update_gold!(af::AllFields)
+function update_g!(af::AllFields)
     @extract af:lrf bpb bpm
     @extract lrf:g
     @extract bpb:conditional
@@ -229,7 +229,6 @@ function update_gold!(af::AllFields)
     L = size(conditional, 6)
     maskL = similar(conditional)
     maskC = similar(conditional)
-    maskR = similar(conditional)
     @tullio maskL[ni, xi, nj, xj, i, j] = (i <= j) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
     @tullio maskC[ni, xi, nj, xj, i, j] = (j > i + 1) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
     #@tullio maskR[ni, xi, nj, xj, i, j] = (i > j-1) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
@@ -241,18 +240,18 @@ function update_gold!(af::AllFields)
     J = reshape(permutedims(Jseq, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
     cond = reshape(permutedims(conditional, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
     scra = permutedims(reshape((maskL .* cond)' * ((J .* maskC) * (cond .* maskL')), np1, 2, L,np1, 2, L),(1,2,4,5,3,6))
-    @show size(scra)
-    res = CUDA.zeros(np1, 2, np1, 2, L)
+    # @show size(scra)
+    # res = CUDA.zeros(np1, 2, np1, 2, L)
 
 
     for i in 1:L-1
-        res[:, :, :, :, i] .= scra[:, :, :, :, i, i+1]
+        g[:, :, :, :, i] .= scra[:, :, :, :, i, i+1]
     end
 
     #@tullio g[nl, xl, nl1, xl1, l] = conditional[ni, xi, nl, xl, i, l] * Jseq[ni, xi, nj, xj, i, j] * conditional[nj, xj, nl1, xl1, j, l+1] * ((i <= l) * (j > l) * (j > i + 1))
     synchronize()
 
-    return res, maskL,maskC,maskR
+    return nothing
 end
 
 #(normalize_3tensor!(ten::AbstractArray{T,3}) where T<:AbstractFloat) = ten .= ten ./ sum(ten, dims = (1, 2))
@@ -289,15 +288,15 @@ end
 function one_bp_sweep!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     @extract pa : lr
     
-    update_F!(af, pm, pa)
-    update_hF!(af, pm, pa)
-    update_B!(af, pm, pa)
-    update_hB!(af, pm, pa)
-    update_beliefs!(af, pm, pa)
-    update_jointchain!(af, pm, pa)
+    CUDA.@time update_F!(af, pm, pa)
+    CUDA.@time update_hF!(af, pm, pa)
+    CUDA.@time update_B!(af, pm, pa)
+    CUDA.@time update_hB!(af, pm, pa)
+    CUDA.@time update_beliefs!(af, pm, pa)
+    CUDA.@time update_jointchain!(af, pm, pa)
     if lr == :sce
-        update_conditional_chain!(af, pa)
-        update_conditional_all!(af, pm)
+        CUDA.@time update_conditional_chain!(af, pa)
+        CUDA.@time update_conditional_all!(af, pm)
         CUDA.@time update_f!(af)
         CUDA.@time update_g!(af)
     end
