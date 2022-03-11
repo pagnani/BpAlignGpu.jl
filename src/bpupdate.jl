@@ -288,17 +288,17 @@ end
 function one_bp_sweep!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     @extract pa : lr
     
-    CUDA.@time update_F!(af, pm, pa)
-    CUDA.@time update_hF!(af, pm, pa)
-    CUDA.@time update_B!(af, pm, pa)
-    CUDA.@time update_hB!(af, pm, pa)
-    CUDA.@time update_beliefs!(af, pm, pa)
-    CUDA.@time update_jointchain!(af, pm, pa)
+    updateF!(af, pm, pa)
+    updatehF!(af, pm, pa)
+    updateB!(af, pm, pa)
+    updatehB!(af, pm, pa)
+    updatebeliefs!(af, pm, pa)
+    updatejointchain!(af, pm, pa)
     if lr == :sce
-        CUDA.@time update_conditional_chain!(af, pa)
-        CUDA.@time update_conditional_all!(af, pm)
-        CUDA.@time update_f!(af)
-        CUDA.@time update_g!(af)
+        updateconditional_chain!(af, pa)
+        updateconditional_all!(af, pm)
+        updatef!(af)
+        updateg!(af)
     end
 end
 
