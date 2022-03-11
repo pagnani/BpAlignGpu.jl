@@ -95,7 +95,11 @@ end
 
 function Base.show(io::IO, x::ParamModel{T}) where {T}
     q, L = size(x.H)
-    print(io, "ParamModel{$(eltype(x.H))}[L=$(x.L) N=$(x.N) q=$(x.q)]")
+    totbytes = 0
+    for f in fieldnames(ParamModel)
+        totbytes += sizeof(getfield(x, f))
+    end
+    print(io, "ParamModel{$(eltype(x.H))}[L=$(x.L) N=$(x.N) q=$(x.q) size=$(Base.format_bytes(totbytes))]")
 end
 
 struct BPMessages{T1,T3,T6}
