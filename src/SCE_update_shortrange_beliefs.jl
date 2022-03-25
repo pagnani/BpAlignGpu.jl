@@ -31,7 +31,7 @@ function SCE_update_beliefs!(beliefs, i, beta, tolnorm, hF, hB, f, muint, muext,
     for y=1:2N+4
         beliefs[y,i] /= S
     end
-    return nothing
+    return log(S)
 end
 
 function SCE_update_joint_chain!(joint_chain, i, beta, tolnorm, F, B, g, lambda_o, lambda_e, N, elts_Jseq)
@@ -79,7 +79,7 @@ function SCE_update_joint_chain!(joint_chain, i, beta, tolnorm, F, B, g, lambda_
             joint_chain[y1, y2, i] /= S
         end
     end
-    return nothing
+    return log(S)
 end
 
 function SCE_update_conditional_chain!(i, conditional, joint_chain, tolnorm, N)
@@ -113,4 +113,31 @@ function SCE_update_conditional_chain!(i, conditional, joint_chain, tolnorm, N)
     return conditional
 end
 
+function logZedge(F, B, hF, hB)
+    Q = size(F, 1)
+    L = size(F, 2) #+1
 
+    #edge of type i,(i,i+1)
+    logZ1 = 0.0
+    for i=1:L-1
+        Z1 = 0.0
+        for y=1:Q
+            Z1 += F[y,i]*hB[y,i]
+        end
+        logZ1 += log(Z1)
+    end
+
+    #edge of type (i,i+1), i+1
+    logZ2 = 0.0
+    for i=2:L
+        Z2 = 0.0
+        for y=1:Q
+            Z2 += B[y,i]*hF[y,i]
+        end
+        logZ2 += log(Z2)
+    end
+    
+    return logZ1, logZ2, logZ1 + logZ2
+#    return logZ = logZ1 + logZ2
+    
+end

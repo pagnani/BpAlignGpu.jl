@@ -13,4 +13,5 @@ include("types.jl")
 include("bpupdate.jl")
 include("utils.jl")
 include("computesol.jl")
+include("free-energy.jl")
 end

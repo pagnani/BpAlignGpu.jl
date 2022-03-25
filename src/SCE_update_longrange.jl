@@ -83,3 +83,30 @@ function SCE_update_g!(g, conditional, elts_Jseq, N)
         g[:,:,l] .= tmpg
     end
 end
+
+function update_lr_free_nrj(beliefs, conditional, elts_Jseq)
+    L = size(conditional,3)
+    Q = size(conditional,1)
+
+    tmpdiagJP = fill(0.0, Q)
+    diagJP = fill(0.0, Q)
+
+    lrfreeen = 0.0
+    
+    fill!(tmpdiagJP,0.0)
+    fill!(diagJP,0.0)
+    tmpres = 0.0
+    @inbounds for i=1:L-2
+        fill!(diagJP,0.0)
+        Ci = view(beliefs, :,i)
+        for j=i+2:L
+            Cji = view(conditional,:,:,j,i)
+            Jij = view(elts_Jseq,:,:,i,j)
+            computediagprod!(tmpdiagJP,Jij,Cji)
+            diagJP .= diagJP .+ tmpdiagJP
+        end
+        tmpres = dot(Ci,diagJP)
+        lrfreeen += tmpres
+    end
+    lrfreeen
+end
