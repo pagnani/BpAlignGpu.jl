@@ -207,18 +207,6 @@ function update_f!(af::AllFields)
     return nothing
 end
 
-function update_gold!(af::AllFields)
-    @extract af : lrf bpb bpm
-    @extract lrf : g
-    @extract bpb : conditional
-    @extract bpm : Jseq
-    
-    @tullio scra[nl, xl, nj, xj, j, l] := conditional[ni, xi, nl, xl, i, l] * Jseq[ni, xi, nj, xj, i, j] * ((i <= l) * (j > l) * (j > i + 1))
-    @tullio g[nl, xl, nl1, xl1, l] = scra[nl, xl, nj, xj, j, l] * conditional[nj, xj, nl1, xl1, j, l+1] * (j > l)
-    #@tullio g[nl, xl, nl1, xl1, l] = conditional[ni, xi, nl, xl, i, l] * Jseq[ni, xi, nj, xj, i, j] * conditional[nj, xj, nl1, xl1, j, l+1] * ((i <= l) * (j > l) * (j > i + 1))
-    synchronize()
-    return nothing
-end
 
 function update_g!(af::AllFields)
     @extract af:lrf bpb bpm
@@ -247,8 +235,54 @@ function update_g!(af::AllFields)
         g[:, :, :, :, i] .= scra[:, :, :, :, i, i+1]
     end
     synchronize()
-    return nothing
+    #return nothing
+    return scra
 end
+
+function update_g_lowmem!(af::AllFields)
+    @extract af:lrf bpb bpm
+    @extract lrf:g
+    @extract bpb:conditional
+    @extract bpm:Jseq
+
+    np1 = size(conditional, 1)
+    L = size(conditional, 6)
+
+    scra = CUDA.zeros(L * 2 * np1, L * 2 * np1)
+
+    mask = similar(conditional)
+    @tullio mask[ni, xi, nj, xj, i, j] = (i <= j) * conditional[ni, xi, nj, xj, i, j] (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
+    #   @tullio maskC[ni, xi, nj, xj, i, j] = (j > i + 1) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
+
+    matL = permutedims(reshape(permutedims(mask, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1), (2, 1))
+    #maskC = reshape(permutedims(maskC, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+    @tullio mask[ni, xi, nj, xj, i, j] = (j > i + 1) * Jseq[ni, xi, nj, xj, i, j] (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
+
+    matC = reshape(permutedims(mask, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+    mul!(scra, matL, matC)
+
+
+    @tullio mask[ni, xi, nj, xj, i, j] = (i >= j) * conditional[ni, xi, nj, xj, i, j] (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
+    matL = reshape(permutedims(mask, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+    mul!(matC, scra, matL)
+
+    scra = permutedims(reshape(matC, np1, 2, L, np1, 2, L), (1, 2, 4, 5, 3, 6))
+
+    # J = reshape(permutedims(Jseq, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+    # cond = reshape(permutedims(conditional, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+    # scra = permutedims(reshape((maskL .* cond)' * ((J .* maskC) * (cond .* maskL')), np1, 2, L, np1, 2, L), (1, 2, 4, 5, 3, 6))
+    # @show size(scra)
+    # res = CUDA.zeros(np1, 2, np1, 2, L)
+
+    for i in 1:L-1
+        g[:, :, :, :, i] .= scra[:, :, :, :, i, i+1]
+    end
+    synchronize()
+    #return nothing
+    return scra
+end
+
+
 
 #(normalize_3tensor!(ten::AbstractArray{T,3}) where T<:AbstractFloat) = ten .= ten ./ sum(ten, dims = (1, 2))
 #(normalize_5tensor!(ten::AbstractArray{T,5}) where T<:AbstractFloat) = ten .= ten ./ sum(ten, dims = (1, 2, 3, 4))

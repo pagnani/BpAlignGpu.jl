@@ -6,7 +6,7 @@ using Tullio, CUDA, LoopVectorization, CUDAKernels, KernelAbstractions
 CUDA.allowscalar(false)
 using ExtractMacro: @extract
 export BPMessages, BPBeliefs, LongRangeFields, AllFields, Seq, ParamModel, ParamAlgo
-using LinearAlgebra: diag
+using LinearAlgebra: diag, mul!
 
 include("dataset.jl") #copy-paste of DCAlign-master
 include("types.jl")
