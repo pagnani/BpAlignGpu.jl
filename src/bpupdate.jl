@@ -157,7 +157,6 @@ function update_conditional_all!(af::AllFields, pm::ParamModel)
     
     for i=1:L-2
         for j = i+1:L-1
-            #@tullio C[ni, xi, nj, xj, i, j+1] = conditional[ni, xi, n, x, i, j] * conditional[n, x, nj, xj, j,j+1]
             C1 = view(conditional, :, :, :, :, i, j)
             C2 = view(conditional, :, :, :, :, j, j + 1)
             conditional[:, :, :, :, i, j+1] .= reshape(reshape(C1, 2(N + 2), 2(N + 2)) * reshape(C2, 2(N + 2), 2(N + 2)), N + 2, 2, N + 2, 2)
@@ -165,7 +164,6 @@ function update_conditional_all!(af::AllFields, pm::ParamModel)
     end    
     for j=1:L-2
         for i = j+1:L-1
-            #@tullio C[ni, xi, nj, xj, i+1, j] = conditional[ni, xi, n, x, i+1, i] * conditional[n, x, nj, xj, i, j]
             C1 = view(conditional, :, :, :, :, i + 1, i)
             C2 = view(conditional, :, :, :, :, i, j)
             conditional[:, :, :, :, i+1, j] .= reshape(reshape(C1, 2(N + 2), 2(N + 2)) * reshape(C2, 2(N + 2), 2(N + 2)), N + 2, 2, N + 2, 2)
@@ -174,118 +172,68 @@ function update_conditional_all!(af::AllFields, pm::ParamModel)
     return nothing
 end
 
-function update_fold!(af::AllFields)
-    @extract af : lrf bpb bpm
-    @extract lrf : f
-    @extract bpb : conditional
-    @extract bpm : Jseq
-
-    @tullio scra[ni, xi, nl, xl, i, l] := Jseq[ni, xi, nj, xj, i, j] * conditional[nj, xj, nl, xl, j, l] * (j > l)
-    @tullio f[nl, xl, l] = -conditional[ni, xi, nl, xl, i, l] * scra[ni, xi, nl, xl, i, l] * (i < l)
-    #@tullio f[nl, xl, l] = -conditional[ni, xi, nl, xl, i, l] * Jseq[ni, xi, nj, xj, i, j] * conditional[nj, xj, nl, xl, j, l] * (i < l) * (j > l)
-    synchronize()
-    return nothing
-end
-
 function update_f!(af::AllFields)
     @extract af : lrf bpb bpm
     @extract lrf : f
     @extract bpb : conditional
     @extract bpm : Jseq
-    np1 = size(conditional, 1)
-    L = size(conditional, 6)
-
-    mask = similar(conditional)
-    @tullio mask[ni, xi, nj, xj, i, j] = (i < j) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
-    mask = reshape(permutedims(mask, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
-    J = reshape(permutedims(Jseq, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
-    cond = reshape(permutedims(conditional, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
-        
-    f .= reshape(diag(- (mask .* cond') * (J * (cond .* mask))), np1, 2, L)
-    #CUDA.@time @tullio fscra[nl, xl, l] := -conditional[ni, xi, nl, xl, i, l] * Jseq[ni, xi, nj, xj, i, j] * conditional[nj, xj, nl, xl, j, l] * (i < l) * (j > l)
-    synchronize()
-    return nothing
-end
-
-
-function update_g!(af::AllFields)
-    @extract af:lrf bpb bpm
-    @extract lrf:g
-    @extract bpb:conditional
-    @extract bpm:Jseq
-
-    np1 = size(conditional, 1)
-    L = size(conditional, 6)
-    maskL = similar(conditional)
-    maskC = similar(conditional)
-    @tullio maskL[ni, xi, nj, xj, i, j] = (i <= j) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
-    @tullio maskC[ni, xi, nj, xj, i, j] = (j > i + 1) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
-    #@tullio maskR[ni, xi, nj, xj, i, j] = (i > j-1) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
-
-    maskL = reshape(permutedims(maskL, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
-    maskC = reshape(permutedims(maskC, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
-    #maskR = reshape(permutedims(maskR, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
-    J = reshape(permutedims(Jseq, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
-    cond = reshape(permutedims(conditional, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
-    scra = permutedims(reshape((maskL .* cond)' * ((J .* maskC) * (cond .* maskL')), np1, 2, L,np1, 2, L),(1,2,4,5,3,6))
-    # @show size(scra)
-    # res = CUDA.zeros(np1, 2, np1, 2, L)
-
-    for i in 1:L-1
-        g[:, :, :, :, i] .= scra[:, :, :, :, i, i+1]
-    end
-    synchronize()
-    #return nothing
-    return scra
-end
-
-function update_g_lowmem!(af::AllFields)
-    @extract af:lrf bpb bpm
-    @extract lrf:g
-    @extract bpb:conditional
-    @extract bpm:Jseq
-
+    
     np1 = size(conditional, 1)
     L = size(conditional, 6)
 
     scra = CUDA.zeros(L * 2 * np1, L * 2 * np1)
-
     mask = similar(conditional)
+
+    @tullio mask[ni, xi, nj, xj, i, j] = (i < j) * conditional[nj, xj, ni, xi, j, i] (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
+    mat1 = reshape(permutedims(mask, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+
+    mat2 = reshape(permutedims(Jseq, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+
+    mul!(scra, mat1, mat2)
+    
+    @tullio mask[ni, xi, nj, xj, i, j] = (i < j)* conditional[ni, xi, nj, xj, i, j] (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
+    mat2 .= reshape(permutedims(mask, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
+
+    mul!(mat1, scra, mat2) 
+        
+    f .= reshape(diag(- mat1), np1, 2, L)
+    synchronize()
+    return nothing
+end
+
+function update_g!(af::AllFields)
+    @extract af : lrf bpb bpm
+    @extract lrf : g
+    @extract bpb : conditional
+    @extract bpm : Jseq
+    
+    np1 = size(conditional, 1)
+    L = size(conditional, 6)
+
+    scra = CUDA.zeros(L * 2 * np1, L * 2 * np1)
+    mask = similar(conditional)
+    
     @tullio mask[ni, xi, nj, xj, i, j] = (i <= j) * conditional[ni, xi, nj, xj, i, j] (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
-    #   @tullio maskC[ni, xi, nj, xj, i, j] = (j > i + 1) (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
+    mat1 = permutedims(reshape(permutedims(mask, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1), (2, 1))
 
-    matL = permutedims(reshape(permutedims(mask, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1), (2, 1))
-    #maskC = reshape(permutedims(maskC, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
     @tullio mask[ni, xi, nj, xj, i, j] = (j > i + 1) * Jseq[ni, xi, nj, xj, i, j] (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
+    mat2 = reshape(permutedims(mask, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
 
-    matC = reshape(permutedims(mask, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
-    mul!(scra, matL, matC)
-
+    mul!(scra, mat1, mat2)
 
     @tullio mask[ni, xi, nj, xj, i, j] = (i >= j) * conditional[ni, xi, nj, xj, i, j] (ni in 1:np1, xi in 1:2, nj in 1:np1, xj in 1:2, i in 1:L, j in 1:L)
-    matL = reshape(permutedims(mask, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
-    mul!(matC, scra, matL)
+    mat1 = reshape(permutedims(mask, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
 
-    scra = permutedims(reshape(matC, np1, 2, L, np1, 2, L), (1, 2, 4, 5, 3, 6))
+    mul!(mat2, scra, mat1)
 
-    # J = reshape(permutedims(Jseq, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
-    # cond = reshape(permutedims(conditional, (1, 2, 5, 3, 4, 6)), L * 2 * np1, L * 2 * np1)
-    # scra = permutedims(reshape((maskL .* cond)' * ((J .* maskC) * (cond .* maskL')), np1, 2, L, np1, 2, L), (1, 2, 4, 5, 3, 6))
-    # @show size(scra)
-    # res = CUDA.zeros(np1, 2, np1, 2, L)
+    scra = permutedims(reshape(mat2, np1, 2, L, np1, 2, L), (1, 2, 4, 5, 3, 6))
 
     for i in 1:L-1
         g[:, :, :, :, i] .= scra[:, :, :, :, i, i+1]
     end
     synchronize()
-    #return nothing
-    return scra
+    return nothing
 end
-
-
-
-#(normalize_3tensor!(ten::AbstractArray{T,3}) where T<:AbstractFloat) = ten .= ten ./ sum(ten, dims = (1, 2))
-#(normalize_5tensor!(ten::AbstractArray{T,5}) where T<:AbstractFloat) = ten .= ten ./ sum(ten, dims = (1, 2, 3, 4))
 
 function normalize_3tensor!(ten::AbstractArray{T,3}) where T<:AbstractFloat
     tolnorm=1f-20

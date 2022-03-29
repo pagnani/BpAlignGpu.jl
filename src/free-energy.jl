@@ -11,7 +11,8 @@ function logZi(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     mynorm = sum(beliefs, dims = (1, 2))
     logZi = sum(log.(mynorm))
     normalize_3tensor!(beliefs)
-    return logZi, log.(mynorm)
+    #@show log.(mynorm)
+    return logZi
 end
 
 function logZa(af::AllFields, pm::ParamModel, pa::ParamAlgo)
@@ -27,7 +28,8 @@ function logZa(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     mynorm = sum(joint_chain, dims = (1, 2, 3, 4))
     logZa = sum(log.(mynorm[1:L-1]))
     normalize_5tensor!(joint_chain)
-    return logZa, log.(mynorm)
+    #@show log.(mynorm)
+    return logZa
 end
 
 
@@ -45,8 +47,8 @@ function logZia(af::AllFields, pm::ParamModel)
     @tullio scra[ni, xi, i] = B[ni, xi, i] * hF[ni, xi, i]
     mynorm = sum(scra, dims=(1,2))
     logZ2 = sum(log.(mynorm[2:L]))
-    
-    return logZia = logZ1 + logZ2  
+    logZia = logZ1 + logZ2  
+    return logZia
 end
 
 function lr_freeen(af::AllFields, pm::ParamModel)
