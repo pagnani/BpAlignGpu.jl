@@ -36,6 +36,7 @@ function Base.show(io::IO, x::Seq)
 end
 
 const allowed_upschemes = [:random,:sequential]
+const allowed_initcond = [:random,:unif]
 const allowed_lrs = [:sce,:mf,:sr]
 mutable struct ParamAlgo{T<:AbstractFloat}
     damp::T
@@ -43,13 +44,15 @@ mutable struct ParamAlgo{T<:AbstractFloat}
     tolnorm::T
     tmax::Int
     upscheme::Symbol # :random or :sequential
+    initcond::Symbol # :random or :unif
     lr::Symbol  # :sce or :sr or :mf 
     beta::T
     verbose::Bool
-    function ParamAlgo(damp::T, tol::T,tolnorm::T, tmax::Int, upscheme::Symbol, lr::Symbol, beta::T, verbose::Bool) where {T<:AbstractFloat}
+    function ParamAlgo(damp::T, tol::T,tolnorm::T, tmax::Int, upscheme::Symbol, initcond::Symbol, lr::Symbol, beta::T, verbose::Bool) where {T<:AbstractFloat}
         upscheme in allowed_upschemes || error("only upscheme ∈ $allowed_upschemes allowed")
+        initcond in allowed_initcond || error("only initcond ∈ $allowed_initcond allowed")
         lr in allowed_lrs || error("only lr ∈ $allowed_lrs allowed")
-        return new{T}(damp, tol,tolnorm, tmax, upscheme, lr, beta, verbose)
+        return new{T}(damp, tol,tolnorm, tmax, upscheme, initcond, lr, beta, verbose)
     end
 end
 
@@ -64,7 +67,7 @@ end
 
 function ParamAlgo{RT}(x::ParamAlgo{T}) where {T<:AbstractFloat, RT<:AbstractFloat}  
     RT === T && return x
-    return ParamAlgo(RT(x.damp), RT(x.tol),RT(x.tolnorm), x.tmax, x.upscheme, x.lr, RT(x.beta), x.verbose)
+    return ParamAlgo(RT(x.damp), RT(x.tol),RT(x.tolnorm), x.tmax, x.upscheme, x.initcond, x.lr, RT(x.beta), x.verbose)
 end
 
 function Base.convert(::Type{RT},x::ParamAlgo{T}) where {RT <: ParamAlgo, T<:AbstractFloat}
@@ -114,9 +117,10 @@ struct BPMessages{T1,T3,T6}
     lambda_o::T1
 end
 
-function BPMessages(seq::Seq, para::ParamModel; T = Float32, ongpu = true)
+function BPMessages(seq::Seq, para::ParamModel, pmodel::ParamAlgo; T = Float32, ongpu = true)
     @extract seq : intseq
     @extract para : J H q lambda_o lambda_e
+    @extract pmodel : initcond
     L = size(H, 2)
     N = length(intseq)
     gpufun = ongpu ? cu : identity
@@ -181,10 +185,19 @@ function BPMessages(seq::Seq, para::ParamModel; T = Float32, ongpu = true)
         end
     end
 
-    F = rand(T, N + 2, 2, L) # forward message, from variable to factor
-    B = rand(T, N + 2, 2, L)  # backward message, from variable to factor
-    hF = rand(T, N + 2, 2, L) # forward message, from factor to variable
-    hB = rand(T, N + 2, 2, L) # backward message, from factor to variable
+    if initcond == :random
+        F = rand(T, N + 2, 2, L) # forward message, from variable to factor
+        B = rand(T, N + 2, 2, L)  # backward message, from variable to factor
+        hF = rand(T, N + 2, 2, L) # forward message, from factor to variable
+        hB = rand(T, N + 2, 2, L) # backward message, from factor to variable
+    elseif initcond == :unif
+        F = ones(T, N + 2, 2, L) # forward message, from variable to factor
+        B = ones(T, N + 2, 2, L)  # backward message, from variable to factor
+        hF = ones(T, N + 2, 2, L) # forward message, from factor to variable
+        hB = ones(T, N + 2, 2, L) # backward message, from factor to variable
+    else
+        println("wrong initialization of BP messages")
+    end
     scra = zeros(T, N + 2, 2, L) #used in updates for BP messages
 
     for v in (F, B, hF, hB)
