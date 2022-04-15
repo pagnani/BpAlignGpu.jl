@@ -283,18 +283,20 @@ end
 function test_sweep!(n,af,pm,pa)
     @extract af : bpb
     @extract bpb : beliefs_old
-    @extract pa : tol
-    
+    @extract pa : tol verbose
+    err=Inf
     for t in 1:n
         beliefs_old .= af.bpb.beliefs
         one_bp_sweep!(af, pm, pa)
         err = maximum(abs.(beliefs_old .- af.bpb.beliefs))
-        println("t=", t, "\t err=", err)
+        if verbose 
+            println("t=", t, "\t err=", err)
+        end
         if err < tol
             println("converged: err=", err, ", tol=", tol)
-            return nothing
+            return err
         end
         flush(stdout)
     end
-    return nothing
+    return err
 end

@@ -4,9 +4,17 @@ function logZi(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     @extract bpm : hF hB Hseq
     @extract bpb : beliefs
     @extract pm : N L muint muext
-    @extract pa : beta
+    @extract pa : beta epscoupling
+
+    Hseqcop = copy(Hseq)
+    if epscoupling[1]
+        xnsol = epscoupling[3]
+        for (i,(x,n)) in pairs(xnsol)
+            Hseqcop[n+1,x+1,i] -= epscoupling[2]
+        end
+    end
     
-    @tullio beliefs[ni, xi, i] = ((i> 1) ? hF[ni, xi, i] : χin(ni, xi, N)) * ((i<L) ? hB[ni, xi, i] : χend(ni, xi, N)) * exp(beta*(Hseq[ni, xi, i] - (2 - xi) * mumask(muint, muext, ni, N) + f[ni, xi, i])) grad = false
+    @tullio beliefs[ni, xi, i] = ((i> 1) ? hF[ni, xi, i] : χin(ni, xi, N)) * ((i<L) ? hB[ni, xi, i] : χend(ni, xi, N)) * exp(beta*(Hseqcop[ni, xi, i] - (2 - xi) * mumask(muint, muext, ni, N) + f[ni, xi, i])) grad = false
     
     mynorm = sum(beliefs, dims = (1, 2))
     logZi = sum(log.(mynorm))
@@ -31,7 +39,6 @@ function logZa(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     #@show log.(mynorm)
     return logZa
 end
-
 
 function logZia(af::AllFields, pm::ParamModel)
     @extract af : bpm
@@ -68,5 +75,56 @@ function lr_freeen(af::AllFields, pm::ParamModel)
             res += sum( diag(mat) .* reshape(M, 2(N+2)) )
         end
     end
+    return res
+end
+
+function freeent(af::AllFields, pm::ParamModel, pa::ParamAlgo)
+    lZi = logZi(af, pm, pa)
+    lZa = logZa(af, pm, pa)
+    lZia = logZia(af, pm)
+    #llr = lr_freeen(af, pm)
+    res = lZi + lZa - lZia #+ llr
+    return res
+end
+
+function freeen(af::AllFields, pm::ParamModel, pa::ParamAlgo)
+    @extract pa : beta
+    res = freeent(af, pm, pa)
+    return -res/beta
+end
+
+#--------------#--------------#--------------#--------------#--------------#
+
+#--------------#--------------#--------------#--------------#--------------#
+
+function internal_nrj(af::AllFields, pm::ParamModel, pa::ParamAlgo)
+    @extract af : bpm bpb
+    @extract bpm : Hseq Jseq scra
+    @extract bpb : beliefs conditional joint_chain
+    @extract pa : epscoupling
+    @extract pm : muint muext N L lambda_e lambda_o
+
+    Hseqcop = copy(Hseq)
+    if epscoupling[1]
+        xnsol = epscoupling[3]
+        for (i,(x,n)) in pairs(xnsol)
+            Hseqcop[n+1,x+1,i] -= epscoupling[2]
+        end
+    end
+    
+    @tullio scra[ni, xi, i] = Hseqcop[ni, xi, i] .* beliefs[ni, xi, i]
+    S1 = sum(scra)
+    
+    @tullio tmp[ni, xi, nj, xj, i, j] := conditional[ni, xi, nj, xj, i, j] .* beliefs[nj, xj, j] .* Jseq[ni, xi, nj, xj, i, j]
+    S2 = sum(tmp)/2
+    
+    @tullio scra[ni, xi, i] = (2-xi) .* mumask(muint, muext, ni, N) .* beliefs[ni, xi, i]
+    S3 = sum(scra)
+    
+#    @tullio inss[ni, xi, nip1, xip1, i] := joint_chain[ni, xi, nip1, xip1, i] .* ϕ(nip1-ni-1, lambda_o[i+1], lambda_e[i+1]) .*(ni>1) .* (nip1<N+2) (ni in 1:(N+2), xi in 1:2, nip1 in 1:(N+2), xip1 in 1:2, i in 1:(L-1))
+    @tullio inss[ni, xi, nip1, xip1, i] := joint_chain[ni, xi, nip1, xip1, i] .* (nip1-ni-1 > 0) .* (lambda_o[i+1] .+ lambda_e[i+1] .* (nip1-ni - 2)) .*(ni>1) .* (nip1<N+2) (ni in 1:(N+2), xi in 1:2, nip1 in 1:(N+2), xip1 in 1:2, i in 1:(L-1))
+    S4 = sum(inss)
+    
+    res = - S1 - S2 + S3 + S4
     return res
 end

@@ -48,11 +48,12 @@ mutable struct ParamAlgo{T<:AbstractFloat}
     lr::Symbol  # :sce or :sr or :mf 
     beta::T
     verbose::Bool
-    function ParamAlgo(damp::T, tol::T,tolnorm::T, tmax::Int, upscheme::Symbol, initcond::Symbol, lr::Symbol, beta::T, verbose::Bool) where {T<:AbstractFloat}
+    epscoupling::Tuple{Bool, Float32, Vector{Tuple{Int64, Int64}}}
+    function ParamAlgo(damp::T, tol::T,tolnorm::T, tmax::Int, upscheme::Symbol, initcond::Symbol, lr::Symbol, beta::T, verbose::Bool, epscoupling::Tuple{Bool, Float32, Vector{Tuple{Int64, Int64}}}) where {T<:AbstractFloat}
         upscheme in allowed_upschemes || error("only upscheme ∈ $allowed_upschemes allowed")
         initcond in allowed_initcond || error("only initcond ∈ $allowed_initcond allowed")
         lr in allowed_lrs || error("only lr ∈ $allowed_lrs allowed")
-        return new{T}(damp, tol,tolnorm, tmax, upscheme, initcond, lr, beta, verbose)
+        return new{T}(damp, tol,tolnorm, tmax, upscheme, initcond, lr, beta, verbose, epscoupling)
     end
 end
 
@@ -67,7 +68,7 @@ end
 
 function ParamAlgo{RT}(x::ParamAlgo{T}) where {T<:AbstractFloat, RT<:AbstractFloat}  
     RT === T && return x
-    return ParamAlgo(RT(x.damp), RT(x.tol),RT(x.tolnorm), x.tmax, x.upscheme, x.initcond, x.lr, RT(x.beta), x.verbose)
+    return ParamAlgo(RT(x.damp), RT(x.tol),RT(x.tolnorm), x.tmax, x.upscheme, x.initcond, x.lr, RT(x.beta), x.verbose, x.epscoupling)
 end
 
 function Base.convert(::Type{RT},x::ParamAlgo{T}) where {RT <: ParamAlgo, T<:AbstractFloat}
@@ -117,10 +118,10 @@ struct BPMessages{T1,T3,T6}
     lambda_o::T1
 end
 
-function BPMessages(seq::Seq, para::ParamModel, pmodel::ParamAlgo; T = Float32, ongpu = true)
+function BPMessages(seq::Seq, para::ParamModel, palgo::ParamAlgo; T = Float32, ongpu = true)
     @extract seq : intseq
     @extract para : J H q lambda_o lambda_e
-    @extract pmodel : initcond
+    @extract palgo : initcond epscoupling
     L = size(H, 2)
     N = length(intseq)
     gpufun = ongpu ? cu : identity
@@ -142,6 +143,13 @@ function BPMessages(seq::Seq, para::ParamModel, pmodel::ParamAlgo; T = Float32, 
             end
         end
     end
+    if epscoupling[1]
+        xnsol = epscoupling[3]
+        for (i,(x,n)) in pairs(xnsol)
+            Hseq[n+1,x+1,i] += epscoupling[2]
+        end
+    end
+    
     # case xi == xj == 1
     for i in 1:L
         for j in 1:L

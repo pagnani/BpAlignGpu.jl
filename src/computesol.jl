@@ -298,7 +298,7 @@ function compute_cost_function(J::Array{Float32,4}, h::Array{Float32,2}, seqins:
     #println(nopen, " open insertions plus ", next, " extended")
     gapcost = μext * ngaps_ext + μint * ngaps_int ### debug ###
     en += μext * ngaps_ext + μint * ngaps_int
-    @show gapcost, inscost
+    #@show gapcost, inscost
     return en
 end
 
@@ -317,6 +317,6 @@ function compute_potts_en(J::Array{Float32,4}, h::Array{Float32,2}, seq::String,
             couplings += -J[Aᵢ,Aⱼ,i,j]
         end
     end
-    @show onesite, couplings
+    #@show onesite, couplings
     return en
 end
