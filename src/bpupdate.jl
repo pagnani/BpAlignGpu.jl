@@ -293,7 +293,7 @@ function test_sweep!(n,af,pm,pa)
             println("t=", t, "\t err=", err)
         end
         if err < tol
-            println("converged: err=", err, ", tol=", tol)
+            println("converged: err=", err, ", tol=", tol, ", nbiter=", t)
             return err
         end
         flush(stdout)

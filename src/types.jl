@@ -61,7 +61,15 @@ function Base.show(io::IO, x::ParamAlgo{T}) where {T<:AbstractFloat}
     println(typeof(x))
     println("-------------")
     for i in fieldnames(ParamAlgo)
-        println(i, "=", getfield(x, i))
+        if i == :epscoupling
+            if x.epscoupling[1] == false
+                println(i, "=", x.epscoupling[1])
+            else
+                println(i, "=", x.epscoupling[1], ", ϵ=", x.epscoupling[2])
+            end
+        else
+            println(i, "=", getfield(x, i))
+        end
     end
     print("-------------")
 end
