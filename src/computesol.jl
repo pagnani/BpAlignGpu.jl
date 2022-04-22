@@ -61,6 +61,59 @@ function convert_soltosequence!(xnsol, strseq, N, L)
     pa, po, f, l
 end
 
+function convertseqtoxnsol(seqsol::Tuple{String, String, Int64, Int64}, pm::ParamModel)
+    @extract pm : N
+    
+    (seqpa, seqpo, first, last) = seqsol
+    L = length(seqpa)
+    xnsol = fill((0,0), L)
+    n = first-1
+    ind = 0
+    for (i,c) in pairs(seqpo)
+        if c == '-'
+            ind += 1
+            xnsol[ind] = (0,n)
+        elseif islowercase(c)
+            n += 1
+        else
+            ind += 1
+            n += 1
+            xnsol[ind] = (1,n)
+        end 
+    end
+
+    fillfirst = (seqpa[1]=='-')
+    i=1
+    while fillfirst == true
+        xnsol[i] = (0,0)
+        i += 1
+        if seqpa[i]!='-'
+            fillfirst = false
+        end
+    end
+
+    fillend = (seqpa[L]=='-')
+    i=L
+    while fillend == true
+        xnsol[i] = (0,N+1)
+        i -= 1
+        if seqpa[i]!='-'
+            fillend = false
+        end
+    end
+    return xnsol
+    
+end
+
+function reshape_T3(B::Array{Float32, 3}, P::Vector{OffsetMatrix{Float64, Matrix{Float64}}})    
+    L = size(B, 3)
+    N = size(B,1)-2
+
+    for i = 1:L
+        P[i] = OffsetArray(permutedims(B[:,:,i],(2,1)), 0:1, 0:N+1)
+    end
+    return nothing
+end
 
 function decodeposterior(P,strseq)
 

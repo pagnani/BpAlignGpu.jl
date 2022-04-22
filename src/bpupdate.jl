@@ -28,6 +28,40 @@ function χsr(nim1, xim1, ni, xi, N, lambda_oi::T, lambda_ei::T, beta::T) where 
     error("the end of the world has come")
 end
 
+function χlr(ni, xi, nj, xj, i, j)
+    if i>j+1
+        if xi == 1
+            if ni >= nj
+                return true
+            else
+                return false
+            end
+        else
+            if ni > nj
+                return true
+            else
+                return false
+            end
+        end
+    elseif i < j-1
+        if xj == 1
+            if ni <= nj
+                return true
+            else
+                return false
+            end
+        else
+            if ni < nj
+                return true
+            else
+                return false
+            end
+        end
+    else
+        return false
+    end
+end
+
 @inline function χin(n, x, N)
     if x == 1
         return n == 1 ? true : false
@@ -201,6 +235,19 @@ function update_f!(af::AllFields)
     return nothing
 end
 
+function update_f_DCAlign!(af::AllFields)
+    @extract af : lrf bpb bpm
+    @extract lrf : f
+    @extract bpb : beliefs
+    @extract bpm : Jseq
+
+    np1 = size(beliefs, 1)
+    L = size(beliefs, 3)
+
+    @tullio f[nl, xl, l] = (i<l-1) * Jseq[ni, xi, nl, xl, i, l] * χlr(ni, xi, nl, xl, i, l) * beliefs[ni, xi, i] + (i>l+1) * Jseq[nl, xl, ni, xi, l, i] * χlr(nl, xl, ni, xi, l, i) * beliefs[ni, xi, i]
+    return nothing
+end
+
 function update_g!(af::AllFields)
     @extract af : lrf bpb bpm
     @extract lrf : g
@@ -272,11 +319,13 @@ function one_bp_sweep!(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     update_hB!(af, pm, pa)
     update_beliefs!(af, pm, pa)
     update_jointchain!(af, pm, pa)
+    update_conditional_chain!(af, pa)
+    update_conditional_all!(af, pm)
     if lr == :sce
-        update_conditional_chain!(af, pa)
-        update_conditional_all!(af, pm)
         update_f!(af)
         update_g!(af)
+    elseif lr == :mf
+        update_f_DCAlign!(af)
     end
 end
 

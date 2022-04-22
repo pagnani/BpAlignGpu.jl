@@ -55,6 +55,56 @@ function SCE_update_f!(f, conditional, elts_Jseq, N)
     end
 end
 
+function SCE_update_f_MF!(f, beliefs, J, N, L, intseq)
+    q = size(J, 1)
+    for i=1:L
+        # case xᵢ = 1 (match)
+        A0 = q
+        @inbounds for nᵢ = 1:N
+            Anᵢ = intseq[nᵢ]
+            expscra = 0.0
+            for j = 1:i-2
+                for nⱼ = 0:nᵢ-1 # light cone constraint nⱼ < nᵢ
+                    Anⱼ = nⱼ == 0 ? A0 : intseq[nⱼ]
+                    expscra += J[Anⱼ, Anᵢ, j, i] * beliefs[N+3+nⱼ, j]
+                    expscra += J[A0, Anᵢ, j, i] * beliefs[1+nⱼ, j]
+                end
+            end
+            for j = i+2:L
+                for nⱼ = nᵢ:N+1 # light cone constraint nⱼ > nᵢ
+                    Anⱼ = nⱼ == N + 1 ? A0 : intseq[nⱼ]
+                    expscra += nᵢ == nⱼ ? 0.0 : J[Anⱼ, Anᵢ, j, i] * beliefs[N+3+nⱼ, j]
+                    expscra += J[A0, Anᵢ, j, i] * beliefs[1+nⱼ, j]
+                end
+            end
+            f[N+3+nᵢ, i] = expscra
+        end
+        # case xᵢ = 0 (gap)
+        @inbounds for nᵢ = 0:N+1
+            expscra = 0.0
+            for j = 1:i-2
+                for nⱼ = 0:nᵢ
+                    Anⱼ = (nⱼ == 0 || nⱼ == N + 1) ? A0 : intseq[nⱼ]
+                    expscra += J[Anⱼ, A0, j, i] * beliefs[N+3+nⱼ, j]
+                    expscra += J[A0, A0, j, i] * beliefs[1+nⱼ, j]
+                end
+            end
+            for j = i+2:L
+                for nⱼ = nᵢ:N+1
+                    Anⱼ = (nⱼ == 0 || nⱼ == N + 1) ? A0 : intseq[nⱼ]
+                    expscra += nᵢ == nⱼ ? 0.0 : J[Anⱼ, A0, j, i] * beliefs[N+3+nⱼ, j]
+                    expscra += J[A0, A0, j, i] * beliefs[1+nⱼ, j]
+                end
+            end
+            f[1+nᵢ, i] = expscra
+        end
+        #cannot match n = 0 pointer
+        f[N+3, i] = -Inf
+        f[2N+4, i] = -Inf
+    end
+    return nothing
+end
+
 function SCE_update_g!(g, conditional, elts_Jseq, N)
     JP = fill(0.0, 2N+4, 2N+4) #for f and g
     tmpJP = fill(0.0, 2N+4, 2N+4) #for f and g

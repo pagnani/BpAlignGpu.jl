@@ -6,13 +6,14 @@ function logZi(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     @extract pm : N L muint muext
     @extract pa : beta epscoupling
 
-    Hseqcop = copy(Hseq)
+    Hseqcop = Array(deepcopy(Hseq))
     if epscoupling[1]
         xnsol = epscoupling[3]
         for (i,(x,n)) in pairs(xnsol)
             Hseqcop[n+1,x+1,i] -= epscoupling[2]
         end
     end
+    Hseqcop = cu(Hseqcop)
     
     @tullio beliefs[ni, xi, i] = ((i> 1) ? hF[ni, xi, i] : χin(ni, xi, N)) * ((i<L) ? hB[ni, xi, i] : χend(ni, xi, N)) * exp(beta*(Hseqcop[ni, xi, i] - (2 - xi) * mumask(muint, muext, ni, N) + f[ni, xi, i])) grad = false
     
@@ -99,32 +100,43 @@ end
 
 function internal_nrj(af::AllFields, pm::ParamModel, pa::ParamAlgo)
     @extract af : bpm bpb
-    @extract bpm : Hseq Jseq scra
-    @extract bpb : beliefs conditional joint_chain
-    @extract pa : epscoupling
-    @extract pm : muint muext N L lambda_e lambda_o
+    @extract bpm : scra lambda_e lambda_o
+    @extract bpb : beliefs joint_chain
+    @extract pm : muint muext N L 
 
-    Hseqcop = copy(Hseq)
+    res = internal_nrj_Potts(af, pa)
+    
+    @tullio scra[ni] := (2-xi) * mumask(muint, muext, ni, N) * beliefs[ni, xi, i]
+    S3 = sum(scra)
+    
+    @tullio inss[ni] := joint_chain[ni, xi, nip1, xip1, i] .* (nip1-ni-1 > 0) .* (lambda_o[i+1] .+ lambda_e[i+1] .* (nip1-ni - 2)) .*(ni>1) .* (nip1<N+2) (ni in 1:(N+2), xi in 1:2, nip1 in 1:(N+2), xip1 in 1:2, i in 1:(L-1))
+    S4 = sum(inss)
+    
+    res += S3 + S4
+    return res
+end
+
+function internal_nrj_Potts(af::AllFields, pa::ParamAlgo)
+    @extract af : bpm bpb
+    @extract bpm : Hseq Jseq 
+    @extract bpb : beliefs conditional
+    @extract pa : epscoupling
+
+    Hseqcop = Array(deepcopy(Hseq))
     if epscoupling[1]
         xnsol = epscoupling[3]
         for (i,(x,n)) in pairs(xnsol)
             Hseqcop[n+1,x+1,i] -= epscoupling[2]
         end
     end
-    
-    @tullio scra[ni, xi, i] = Hseqcop[ni, xi, i] .* beliefs[ni, xi, i]
+    Hseqcop = cu(Hseqcop)
+
+    @tullio scra[ni] := Hseqcop[ni, xi, i] .* beliefs[ni, xi, i]
     S1 = sum(scra)
     
-    @tullio tmp[ni, xi, nj, xj, i, j] := conditional[ni, xi, nj, xj, i, j] .* beliefs[nj, xj, j] .* Jseq[ni, xi, nj, xj, i, j]
+    @tullio tmp[ni] := conditional[ni, xi, nj, xj, i, j] .* beliefs[nj, xj, j] .* Jseq[ni, xi, nj, xj, i, j]
     S2 = sum(tmp)/2
     
-    @tullio scra[ni, xi, i] = (2-xi) .* mumask(muint, muext, ni, N) .* beliefs[ni, xi, i]
-    S3 = sum(scra)
-    
-#    @tullio inss[ni, xi, nip1, xip1, i] := joint_chain[ni, xi, nip1, xip1, i] .* ϕ(nip1-ni-1, lambda_o[i+1], lambda_e[i+1]) .*(ni>1) .* (nip1<N+2) (ni in 1:(N+2), xi in 1:2, nip1 in 1:(N+2), xip1 in 1:2, i in 1:(L-1))
-    @tullio inss[ni, xi, nip1, xip1, i] := joint_chain[ni, xi, nip1, xip1, i] .* (nip1-ni-1 > 0) .* (lambda_o[i+1] .+ lambda_e[i+1] .* (nip1-ni - 2)) .*(ni>1) .* (nip1<N+2) (ni in 1:(N+2), xi in 1:2, nip1 in 1:(N+2), xip1 in 1:2, i in 1:(L-1))
-    S4 = sum(inss)
-    
-    res = - S1 - S2 + S3 + S4
+    res = - S1 - S2
     return res
 end
