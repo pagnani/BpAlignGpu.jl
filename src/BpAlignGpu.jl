@@ -2,6 +2,7 @@ module BpAlignGpu
 
 using FastaIO # needed for dataset.jl
 using OffsetArrays #only needed for function 'decodeposterior' copy-pasted from DCAlign-master (and not needed for BP updates)
+using StatsBase
 using Tullio, CUDA, LoopVectorization, CUDAKernels, KernelAbstractions, Statistics
 CUDA.allowscalar(false)
 using ExtractMacro: @extract
@@ -15,5 +16,6 @@ include("utils.jl")
 include("computesol.jl")
 include("free-energy.jl")
 include("decimation.jl") #copy-pasted from DCAlign-master
+include("viterbi.jl") #alternative to nucleation for the decimation
 include("functionsforanalysis.jl") #functions for epsilons-coupling analysis
 end
