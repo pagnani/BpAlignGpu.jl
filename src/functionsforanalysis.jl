@@ -51,12 +51,17 @@ function findGS(af, pm, pa, seq; iters=700, minpol = 0.90, nmax = 500, minbet = 
     return beta, err, polar, energy, check, U, S, xnsol, bel
 end
 
-function findGS_onebeta(af, pm, pa, seq; iters=700)
+function findGS_betarange(af, pm, pa, seq; iters=700, betarange = 0.0:0.1:1.0)
     @extract seq : ctype strseq
     @extract pm : L H J lambda_o lambda_e muext muint N
     
-        
-    err = BpAlignGpu.test_sweep!(iters,af,pm,pa)
+    err = Inf
+    for beta in betarange
+        @show beta
+        pa.beta = beta
+        err = BpAlignGpu.test_sweep!(iters,af,pm,pa)
+    end
+    
     xnsol, maxbel = BpAlignGpu.solmaxbel(af)
     seqsol = BpAlignGpu.convert_soltosequence!(xnsol, strseq, N, L)
         
