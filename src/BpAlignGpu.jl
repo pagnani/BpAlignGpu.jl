@@ -17,5 +17,5 @@ include("computesol.jl")
 include("free-energy.jl")
 include("decimation.jl") #copy-pasted from DCAlign-master
 include("viterbi.jl") #alternative to nucleation for the decimation
-include("functionsforanalysis.jl") #functions for epsilons-coupling analysis
+include("functionsforanalysis.jl") #functions for finding ground state
 end

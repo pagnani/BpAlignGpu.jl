@@ -6,9 +6,9 @@ function findGS(af, pm, pa, seq; iters=700, minpol = 0.90, nmax = 500, minbet = 
     err = Inf
     energy = Inf
     n=0
-    beta = 0.0
+    beta = pa.beta
     incbet = 0.1
-    while (polar < minpol && n<nmax)
+    while (polar < minpol && n<nmax && incbet>minbet)
 
         af_old = deepcopy(af)
         pa.beta = beta
@@ -24,16 +24,13 @@ function findGS(af, pm, pa, seq; iters=700, minpol = 0.90, nmax = 500, minbet = 
         polar_old = polar
         polar = mean(maxbel)
         @show polar, energy
-        if (( (polar_old > polar) && (err > pa.tol) ) || ( (energy_old < energy) && (err > pa.tol) ) )
+        if ( (polar_old > polar) && (err > pa.tol) ) 
             println("decrease incbet: ", incbet/2, " ** polar_old: ", polar_old, ", polar: ", polar, " ** energy_old: ", energy_old, ", energy: ", energy)
             beta -= incbet
             af = deepcopy(af_old)
             polar = polar_old
             energy = energy_old
             incbet /= 2
-            if incbet < minbet
-                break
-            end
         else    
             n += 1
         end
@@ -51,15 +48,23 @@ function findGS(af, pm, pa, seq; iters=700, minpol = 0.90, nmax = 500, minbet = 
     return beta, err, polar, energy, check, U, S, xnsol, bel
 end
 
-function findGS_betarange(af, pm, pa, seq; iters=700, betarange = 0.0:0.1:1.0)
+function findGS_betarange(af, pm, pa, seq; iters=700, betarange = 0.0:0.1:1.0, minpol = 0.90)
     @extract seq : ctype strseq
     @extract pm : L H J lambda_o lambda_e muext muint N
     
     err = Inf
+    polar = 0.0
     for beta in betarange
-        @show beta
-        pa.beta = beta
-        err = BpAlignGpu.test_sweep!(iters,af,pm,pa)
+        if polar < minpol
+            @show beta
+            pa.beta = beta
+            err = BpAlignGpu.test_sweep!(iters,af,pm,pa)
+            xn, maxbel = BpAlignGpu.solmaxbel(af)
+            polar = mean(maxbel)
+            seqsol = BpAlignGpu.convert_soltosequence!(xn, strseq, N, L)
+            energy = BpAlignGpu.compute_cost_function(J, H, seqsol[2], L, ctype, lambda_o, lambda_e, muext, muint)
+            @show polar, energy
+        end
     end
     
     xnsol, maxbel = BpAlignGpu.solmaxbel(af)
@@ -80,4 +85,3 @@ function findGS_betarange(af, pm, pa, seq; iters=700, betarange = 0.0:0.1:1.0)
     
     return pa.beta, err, polar, energy, check, U, S, xnsol, bel
 end
-
