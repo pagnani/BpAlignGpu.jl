@@ -1,0 +1,6 @@
+#file "run_GS_$familyname_n$numrun_$lrmethod_$decim.txt
+# (Ground state obtained with decimation (maxP or nucleation or Viterbi)
+1:params = [nsamples, L, M, delta, "family name", damp, tol, tolnorm, initcond, lr, niters, minpol, nmax, minbet]
+2:indices
+3:solutions concatenated (x0,x1)
+

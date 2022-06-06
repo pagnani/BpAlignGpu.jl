@@ -22,15 +22,3 @@ paramrun_betafixed = [nsamp, fam, L, M, delta, pa.damp, pa.tol, pa.tolnorm, pa.i
 19: σerrs
 20: nbsol_mean
 21: nbsol_std
-
-#file "run_GS_$familyname_$lrmethod_$numrun.txt
-# (Ground state obtained with max(P), and if this is not a solution then using nucleation)
-params = [nsamples, "family name", damp, tol, tolnorm, initcond, lr, niters, minpol, nmax, minbet]
-1:index 2:pa 3:po 4:first 5:last
-
-#file "run_GS_$familyname_n$numrun_$lrmethod_$decim.txt
-# (Ground state obtained with decimation (maxP or nucleation or Viterbi)
-1:params = [nsamples, L, M, delta, "family name", damp, tol, tolnorm, initcond, lr, niters, minpol, nmax, minbet]
-2:indices
-3:solutions concatenated (x0,x1)
-
