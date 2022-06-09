@@ -1,0 +1,29 @@
+(index, idx0, ϵ, argdamp) = (1, 1, -0.0f0, 0.2f0)
+beta = 0.0
+converged: err=0.000856936, tol=0.001, nbiter=123
+(polar, energy) = (0.04040743f0, 355.95047f0)
+beta = 0.05
+converged: err=0.00095985644, tol=0.001, nbiter=18
+(polar, energy) = (0.046132684f0, 283.28555f0)
+beta = 0.1
+converged: err=0.00091476366, tol=0.001, nbiter=12
+(polar, energy) = (0.0522138f0, 252.87486f0)
+beta = 0.15
+converged: err=0.00096282363, tol=0.001, nbiter=84
+(polar, energy) = (0.045765348f0, 181.18494f0)
+beta = 0.2
+converged: err=0.0009280965, tol=0.001, nbiter=8
+(polar, energy) = (0.052511856f0, 194.48143f0)
+beta = 0.25
+converged: err=0.00096482784, tol=0.001, nbiter=7
+(polar, energy) = (0.06122371f0, 190.01462f0)
+beta = 0.3
+converged: err=0.00097095966, tol=0.001, nbiter=274
+(polar, energy) = (0.5152329f0, -129.20163f0)
+beta = 0.35
+converged: err=0.00083839893, tol=0.001, nbiter=36
+(polar, energy) = (0.7021552f0, -127.82568f0)
+beta = 0.4
+converged: err=0.0007739067, tol=0.001, nbiter=194
+(polar, energy) = (0.76162046f0, -135.9662f0)
+beta = 0.45
