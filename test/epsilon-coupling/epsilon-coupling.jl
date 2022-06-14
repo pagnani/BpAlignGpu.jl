@@ -86,7 +86,7 @@ function main(args)
     ##find ground state
     iters = 800
     minpol = 2.0
-    betarange = 0.0:0.05:0.5
+    betarange = [0.0, 0.1, 0.2, 0.3, 0.31, 0.32, 0.33, 0.34, 0.35, 0.36, 0.37, 0.38, 0.39, 0.4]#0.0:0.1:0.4
     @time beta_ϵ, err_ϵ, polar_ϵ, energy_ϵ, check_ϵ, U_ϵ, S_ϵ, xnsol_ϵ, bel_ϵ = BpAlignGpu.findGS_betarange(af, pm, pa, seq; iters=iters, betarange = betarange, minpol = minpol)
 #------------------------------------------#------------------------------------------#------------------------------------------
     #decimation using Viterbi
