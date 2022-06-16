@@ -23,7 +23,7 @@ function findGS(af, pm, pa, seq; iters=700, minpol = 0.90, nmax = 500, minbet = 
 
         polar_old = polar
         polar = mean(maxbel)
-        @show polar, energy
+        @show polar, energy, err
         if ( (polar_old > polar) && (err > pa.tol) ) 
             println("decrease incbet: ", incbet/2, " ** polar_old: ", polar_old, ", polar: ", polar, " ** energy_old: ", energy_old, ", energy: ", energy)
             beta -= incbet
@@ -63,7 +63,7 @@ function findGS_betarange(af, pm, pa, seq; iters=700, betarange = 0.0:0.1:1.0, m
             polar = mean(maxbel)
             seqsol = BpAlignGpu.convert_soltosequence!(xn, strseq, N, L)
             energy = BpAlignGpu.compute_cost_function(J, H, seqsol[2], L, ctype, lambda_o, lambda_e, muext, muint)
-            @show polar, energy
+            @show polar, energy, err
         end
     end
     
@@ -73,7 +73,6 @@ function findGS_betarange(af, pm, pa, seq; iters=700, betarange = 0.0:0.1:1.0, m
     energy = BpAlignGpu.compute_cost_function(J, H, seqsol[2], L, ctype, lambda_o, lambda_e, muext, muint)
 
     polar = mean(maxbel)
-    @show polar, energy
     
     c = BpAlignGpu.check_sr!(xnsol, L, N)
     check = sum(c)
