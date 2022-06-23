@@ -90,13 +90,20 @@ function main(args)
 
     @show energy_ϵ, energy_nucl, energy_vit
 #------------------------------------------#------------------------------------------#------------------------------------------
-    paramrun = [40, fam, L, M, delta, pa.damp, pa.tol, pa.tolnorm, pa.initcond, pa.lr, iters, minpol]
-    namefile = "inds.txt"
+    paramrun = [fam, L, M, delta, pa.damp, pa.tol, pa.tolnorm, pa.initcond, pa.lr, iters, minpol]
+    namefile = "params_"*String(fam)*"_"*String(pa.lr)*".txt"
     open(namefile, "a") do io
         writedlm(io, [paramrun])
     end    
+
 #------------------------------------------#------------------------------------------#------------------------------------------
-    namefile = "run_GS_"*String(fam)*"_n40_"*String(pa.lr)*"_maxP.txt"
+    results = [idx0, energy_ϵ, energy_nucl, energy_vit, U_ϵ, S_ϵ, polar_ϵ, beta_ϵ, err_ϵ, check_ϵ]
+    namefile = "results_"*String(fam)*"_"*String(pa.lr)*".txt"
+    open(namefile, "a") do io
+        writedlm(io, [results])
+    end    
+   #------------------------------------------#------------------------------------------#------------------------------------------
+    namefile = "run_GS_"*String(fam)*"_"*String(pa.lr)*"_maxP.txt"
     x0 = [x[1] for x in xnsol_ϵ]
     x1 = [x[2] for x in xnsol_ϵ]
     xc = vcat(x0, x1)
@@ -104,7 +111,7 @@ function main(args)
         writedlm(io, [xc])
     end
 
-    namefile = "run_GS_"*String(fam)*"_n40_"*String(pa.lr)*"_nucleation.txt"
+    namefile = "run_GS_"*String(fam)*"_"*String(pa.lr)*"_nucleation.txt"
     x0 = [x[1] for x in xnsol_nucl]
     x1 = [x[2] for x in xnsol_nucl]
     xc = vcat(x0, x1)
@@ -112,7 +119,7 @@ function main(args)
         writedlm(io, [xc])
     end
 
-    namefile = "run_GS_"*String(fam)*"_n40_"*String(pa.lr)*"_viterbi.txt"
+    namefile = "run_GS_"*String(fam)*"_"*String(pa.lr)*"_viterbi.txt"
     x0 = [x[1] for x in xnsol_vit]
     x1 = [x[2] for x in xnsol_vit]
     xc = vcat(x0, x1)

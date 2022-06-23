@@ -1,0 +1,90 @@
+(idx0, argminpol, argdamp) = (48, 0.7, 0.9f0)
+beta = 0.1
+converged: err=0.0009986758, tol=0.001, nbiter=50
+(polar, energy, err) = (0.014538909f0, 511.0488f0, 0.0009986758f0)
+beta = 0.2
+converged: err=0.00095385313, tol=0.001, nbiter=42
+(polar, energy, err) = (0.025328273f0, 317.05875f0, 0.00095385313f0)
+beta = 0.3
+converged: err=0.0009892583, tol=0.001, nbiter=44
+(polar, energy, err) = (0.041317612f0, 258.82123f0, 0.0009892583f0)
+beta = 0.4
+converged: err=0.0009975433, tol=0.001, nbiter=488
+(polar, energy, err) = (0.61980665f0, -89.59184f0, 0.0009975433f0)
+beta = 0.5
+converged: err=0.00085878285, tol=0.001, nbiter=414
+(polar, energy, err) = (0.67238754f0, -95.33099f0, 0.00085878285f0)
+beta = 0.6
+(polar, energy, err) = (0.6078753f0, 44.29641f0, 0.99917f0)
+beta = 0.7
+(polar, energy, err) = (0.61745924f0, 75.21383f0, 0.9851328f0)
+beta = 0.8
+(polar, energy, err) = (0.7110522f0, 67.935196f0, 0.9991487f0)
+31141.616032 seconds (1.07 G allocations: 54.397 GiB, 0.66% gc time, 0.39% compilation time)
+(beta_ϵ, err_ϵ, polar_ϵ, energy_ϵ, check_ϵ, U_ϵ, S_ϵ) = (0.8f0, 0.9991487f0, 0.7110522f0, 67.935196f0, 19, -3.4598846f0, 14.780833f0)
+(energy_ϵ, energy_nucl, energy_vit) = (67.935196f0, 68.214355f0, -72.89952f0)
+
+
+(idx0, argminpol, argdamp) = (60, 0.7, 0.9f0)
+beta = 0.1
+converged: err=0.0009710938, tol=0.001, nbiter=53
+(polar, energy, err) = (0.016813656f0, 503.74524f0, 0.0009710938f0)
+beta = 0.2
+converged: err=0.00097602606, tol=0.001, nbiter=42
+(polar, energy, err) = (0.028179735f0, 304.07663f0, 0.00097602606f0)
+beta = 0.3
+converged: err=0.0009701848, tol=0.001, nbiter=48
+(polar, energy, err) = (0.045580093f0, 211.08398f0, 0.0009701848f0)
+beta = 0.4
+converged: err=0.0009972155, tol=0.001, nbiter=454
+(polar, energy, err) = (0.53422534f0, -64.79634f0, 0.0009972155f0)
+beta = 0.5
+converged: err=0.0009737611, tol=0.001, nbiter=73
+(polar, energy, err) = (0.5761635f0, -56.949295f0, 0.0009737611f0)
+beta = 0.6
+(polar, energy, err) = (0.52044415f0, 65.039536f0, 0.74040395f0)
+beta = 0.7
+(polar, energy, err) = (0.67422986f0, 65.66295f0, 0.96130013f0)
+beta = 0.8
+(polar, energy, err) = (0.73278284f0, 57.832634f0, 0.98433447f0)
+13707.382123 seconds (977.86 M allocations: 49.841 GiB, 1.30% gc time, 0.91% compilation time)
+(beta_ϵ, err_ϵ, polar_ϵ, energy_ϵ, check_ϵ, U_ϵ, S_ϵ) = (0.8f0, 0.98433447f0, 0.73278284f0, 57.832634f0, 10, -30.519234f0, 10.05746f0)
+(energy_ϵ, energy_nucl, energy_vit) = (57.832634f0, 38.89703f0, -46.433052f0)
+
+
+(idx0, argminpol, argdamp) = (96, 0.7, 0.9f0)
+beta = 0.1
+converged: err=0.0009927899, tol=0.001, nbiter=54
+(polar, energy, err) = (0.017449832f0, 462.97543f0, 0.0009927899f0)
+beta = 0.2
+converged: err=0.0009921789, tol=0.001, nbiter=42
+(polar, energy, err) = (0.028917253f0, 350.92346f0, 0.0009921789f0)
+beta = 0.3
+converged: err=0.000998795, tol=0.001, nbiter=47
+(polar, energy, err) = (0.046548523f0, 242.39784f0, 0.000998795f0)
+beta = 0.4
+converged: err=0.0009937882, tol=0.001, nbiter=390
+(polar, energy, err) = (0.5883605f0, -84.17982f0, 0.0009937882f0)
+beta = 0.5
+converged: err=0.0005019307, tol=0.001, nbiter=632
+(polar, energy, err) = (0.6427716f0, -93.25967f0, 0.0005019307f0)
+beta = 0.6
+(polar, energy, err) = (0.6606569f0, -65.327484f0, 0.09879367f0)
+beta = 0.7
+(polar, energy, err) = (0.7066815f0, 42.195004f0, 0.9997447f0)
+11857.003621 seconds (903.07 M allocations: 46.039 GiB, 0.98% gc time, 1.05% compilation time)
+(beta_ϵ, err_ϵ, polar_ϵ, energy_ϵ, check_ϵ, U_ϵ, S_ϵ) = (0.7f0, 0.9997447f0, 0.7066815f0, 42.195004f0, 17, 46.587788f0, 7.6085143f0)
+(energy_ϵ, energy_nucl, energy_vit) = (42.195004f0, -11.351349f0, -25.832924f0)
+
+
+(idx0, argminpol, argdamp) = (24, 0.7, 0.9f0)
+beta = 0.1
+converged: err=0.0009558499, tol=0.001, nbiter=53
+(polar, energy, err) = (0.014377349f0, 682.79755f0, 0.0009558499f0)
+beta = 0.2
+converged: err=0.0009930432, tol=0.001, nbiter=41
+(polar, energy, err) = (0.025125911f0, 573.1354f0, 0.0009930432f0)
+beta = 0.3
+converged: err=0.0009740591, tol=0.001, nbiter=45
+(polar, energy, err) = (0.04096111f0, 494.0043f0, 0.0009740591f0)
+beta = 0.4

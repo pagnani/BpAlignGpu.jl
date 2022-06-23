@@ -4,7 +4,28 @@ using BpAlignGpu
 using Plots, Statistics, DelimitedFiles, CUDA
 using ExtractMacro: @extract
 
-function find_sol(idx0, xn0, ϵ, seq, pm, T, damp, tol, tolnorm, initcond, lr, iters, betarange)
+function extract_data(namefile::String)
+    data = readdlm(namefile);
+    param = data[1,:]
+    nsamp = param[1]
+    L = param[3]
+
+    inds = data[2,1:nsamp];
+    res = data[3:end,:];
+
+    xnsols = fill((0,0), L, nsamp)
+    for ns in 1:nsamp
+        for i=1:L
+            x = res[ns,i]
+            n = res[ns,L+i]
+            xnsols[i,ns] = (x,n)
+        end
+    end
+
+    return inds, xnsols
+end
+                
+function find_sol(index, idx0, xn0, ϵ, seq, pm, T, damp, tol, tolnorm, initcond, lr, iters, betarange)
     @extract pm : N L
     
     #build paramalgo
@@ -34,12 +55,18 @@ function find_sol(idx0, xn0, ϵ, seq, pm, T, damp, tol, tolnorm, initcond, lr, i
         exit(0)
     end
     
-    @show idx0 ϵ energy_vit U_ϵ S_ϵ polar_ϵ beta_ϵ err_ϵ check_ϵ
-    return energy_vit, U_ϵ, S_ϵ, polar_ϵ, beta_ϵ, err_ϵ, check_ϵ, xnsol_vit
+    Hdist = sum(xnsol_vit .!= xn0)/L
+    @show index idx0 ϵ Hdist energy_vit U_ϵ S_ϵ polar_ϵ beta_ϵ err_ϵ check_ϵ
+    return Hdist, energy_vit, U_ϵ, S_ϵ, polar_ϵ, beta_ϵ, err_ϵ, check_ϵ, xnsol_vit
 end
 
 function main(args)
-    idx0 = parse(Int64, args[1])
+    index = parse(Int64, args[1])
+    
+    namefile = "groundstate_PF00684_n60_mf_viterbi.txt"
+    inds, xnsols0 = extract_data(namefile);
+    idx0 = inds[index]
+    xn0 = xnsols0[:,index]
     
 #------------------------------------------#------------------------------------------#-----------------------------------------
     CUDA.device!(0)
@@ -71,6 +98,7 @@ function main(args)
     N = length(al[idx0][2])
     pm = ParamModel{T}(N, L, q, muint, muext, lambda_o, lambda_e, H, J)
 #------------------------------------------#------------------------------------------#-----------------------------------------
+    
     epsilons = [-0.0, -0.2, -0.4, -0.5, -0.6, -0.7, -0.8, -0.9, -1.0, -1.2, -1.3, -1.5]
     damp=T(0.2)
     tol=T(1e-3)
@@ -80,28 +108,19 @@ function main(args)
     iters = 300
     betarange = 0.1:0.1:0.4
     
-    results = zeros(length(epsilons), 10)
+    results = zeros(length(epsilons), 11)
     xnsols_eps = fill(0, 2*L, length(epsilons));
 
-    xn0 = fill((0, 0), L)
     for (i,ϵ) in pairs(epsilons)
-        @show idx0, ϵ, damp
-        if i == 1
-            energy_vit, U_ϵ, S_ϵ, polar_ϵ, beta_ϵ, err_ϵ, check_ϵ, xnsol_vit = find_sol(idx0, xn0, ϵ, seq, pm, T, damp, tol, tolnorm, initcond, lr, iters, betarange)
-            Hdist = 0.0
-            xn0 = xnsol_vit    
-        else
-            energy_vit, U_ϵ, S_ϵ, polar_ϵ, beta_ϵ, err_ϵ, check_ϵ, xnsol_vit = find_sol(idx0, xn0, ϵ, seq, pm, T, damp, tol, tolnorm, initcond, lr, iters, betarange)
-            Hdist = sum(xnsol_vit .!= xn0)/L
-        end
-        
+        @show index, idx0, ϵ, damp
+        Hdist, energy_vit, U_ϵ, S_ϵ, polar_ϵ, beta_ϵ, err_ϵ, check_ϵ, xnsol_vit = find_sol(index, idx0, xn0, ϵ, seq, pm, T, damp, tol, tolnorm, initcond, lr, iters, betarange)
         println("\n")
         if err_ϵ > 5.0*tol
             println("---> this sequence does not converge <---")
             println("\n")
             exit(0)
         else
-            results[i,:] = [idx0 ϵ Hdist energy_vit U_ϵ S_ϵ polar_ϵ beta_ϵ err_ϵ check_ϵ]
+            results[i,:] = [index idx0 ϵ Hdist energy_vit U_ϵ S_ϵ polar_ϵ beta_ϵ err_ϵ check_ϵ]
             x0 = [x[1] for x in xnsol_vit]
             x1 = [x[2] for x in xnsol_vit]
             xc = vcat(x0, x1)

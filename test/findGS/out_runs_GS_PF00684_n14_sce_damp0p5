@@ -172,3 +172,137 @@ beta = 1.0
 (energy_ϵ, energy_nucl, energy_vit) = (170.38145f0, 56.663456f0, -34.99713f0)
 
 
+(idx0, argminpol, argdamp) = (65, 0.7, 0.5f0)
+beta = 0.1
+converged: err=0.0008545518, tol=0.001, nbiter=14
+(polar, energy, err) = (0.015904043f0, 364.34988f0, 0.0008545518f0)
+beta = 0.2
+converged: err=0.0007843673, tol=0.001, nbiter=14
+(polar, energy, err) = (0.028617831f0, 243.25157f0, 0.0007843673f0)
+beta = 0.3
+converged: err=0.0009864978, tol=0.001, nbiter=22
+(polar, energy, err) = (0.051345926f0, 174.79999f0, 0.0009864978f0)
+beta = 0.4
+converged: err=0.00095939636, tol=0.001, nbiter=157
+(polar, energy, err) = (0.6100139f0, -89.57466f0, 0.00095939636f0)
+beta = 0.5
+converged: err=0.0008587241, tol=0.001, nbiter=28
+(polar, energy, err) = (0.6607869f0, -93.82246f0, 0.0008587241f0)
+beta = 0.6
+(polar, energy, err) = (0.65209585f0, -43.37899f0, 0.1529068f0)
+beta = 0.7
+(polar, energy, err) = (0.85902685f0, 94.22743f0, 0.9982657f0)
+16570.690898 seconds (676.78 M allocations: 34.545 GiB, 0.63% gc time, 0.72% compilation time)
+(beta_ϵ, err_ϵ, polar_ϵ, energy_ϵ, check_ϵ, U_ϵ, S_ϵ) = (0.7f0, 0.9982657f0, 0.85902685f0, 94.22743f0, 14, 5.3777924f0, 10.482034f0)
+(energy_ϵ, energy_nucl, energy_vit) = (94.22743f0, 76.8452f0, -83.00836f0)
+
+
+(idx0, argminpol, argdamp) = (69, 0.7, 0.5f0)
+beta = 0.1
+converged: err=0.00088360906, tol=0.001, nbiter=14
+(polar, energy, err) = (0.01557913f0, 371.6566f0, 0.00088360906f0)
+beta = 0.2
+converged: err=0.0008100867, tol=0.001, nbiter=14
+(polar, energy, err) = (0.028695982f0, 119.06413f0, 0.0008100867f0)
+beta = 0.3
+converged: err=0.0009818673, tol=0.001, nbiter=84
+(polar, energy, err) = (0.08369318f0, -58.467842f0, 0.0009818673f0)
+beta = 0.4
+converged: err=0.00095552206, tol=0.001, nbiter=78
+(polar, energy, err) = (0.5954188f0, -93.81185f0, 0.00095552206f0)
+beta = 0.5
+converged: err=0.00093768537, tol=0.001, nbiter=245
+(polar, energy, err) = (0.64718944f0, -93.10582f0, 0.00093768537f0)
+beta = 0.6
+(polar, energy, err) = (0.67154664f0, -26.181572f0, 0.47665593f0)
+beta = 0.7
+(polar, energy, err) = (0.6585933f0, 105.218704f0, 0.99515575f0)
+beta = 0.8
+(polar, energy, err) = (0.7871408f0, -99.09637f0, 0.30254546f0)
+28736.348667 seconds (920.78 M allocations: 46.941 GiB, 0.56% gc time, 0.43% compilation time)
+(beta_ϵ, err_ϵ, polar_ϵ, energy_ϵ, check_ϵ, U_ϵ, S_ϵ) = (0.8f0, 0.30254546f0, 0.7871408f0, -99.09637f0, 2, -46.586555f0, 1.1653212f0)
+(energy_ϵ, energy_nucl, energy_vit) = (-99.09637f0, -96.883194f0, -97.02531f0)
+
+
+(idx0, argminpol, argdamp) = (70, 0.7, 0.5f0)
+beta = 0.1
+converged: err=0.0009226799, tol=0.001, nbiter=14
+(polar, energy, err) = (0.014818245f0, 339.95303f0, 0.0009226799f0)
+beta = 0.2
+converged: err=0.00077065825, tol=0.001, nbiter=14
+(polar, energy, err) = (0.027530093f0, 276.50327f0, 0.00077065825f0)
+beta = 0.3
+converged: err=0.0009908825, tol=0.001, nbiter=119
+(polar, energy, err) = (0.094009206f0, -90.301895f0, 0.0009908825f0)
+beta = 0.4
+converged: err=0.0009223521, tol=0.001, nbiter=79
+(polar, energy, err) = (0.6900966f0, -118.836235f0, 0.0009223521f0)
+beta = 0.5
+(polar, energy, err) = (0.70243925f0, -77.61097f0, 0.31645927f0)
+11706.465493 seconds (478.77 M allocations: 24.480 GiB, 0.51% gc time, 0.96% compilation time)
+(beta_ϵ, err_ϵ, polar_ϵ, energy_ϵ, check_ϵ, U_ϵ, S_ϵ) = (0.5f0, 0.31645927f0, 0.70243925f0, -77.61097f0, 5, -84.00311f0, 0.5594551f0)
+(energy_ϵ, energy_nucl, energy_vit) = (-77.61097f0, -18.459072f0, -123.35715f0)
+
+
+(idx0, argminpol, argdamp) = (76, 0.7, 0.5f0)
+beta = 0.1
+converged: err=0.0009445101, tol=0.001, nbiter=14
+(polar, energy, err) = (0.015575407f0, 372.63348f0, 0.0009445101f0)
+beta = 0.2
+converged: err=0.0008279383, tol=0.001, nbiter=14
+(polar, energy, err) = (0.028704315f0, 234.89981f0, 0.0008279383f0)
+beta = 0.3
+converged: err=0.0009812713, tol=0.001, nbiter=353
+(polar, energy, err) = (0.6754904f0, -173.40129f0, 0.0009812713f0)
+beta = 0.4
+(polar, energy, err) = (0.92618674f0, -177.50803f0, 0.01570183f0)
+11738.125295 seconds (515.97 M allocations: 26.365 GiB, 1.12% gc time, 0.96% compilation time)
+(beta_ϵ, err_ϵ, polar_ϵ, energy_ϵ, check_ϵ, U_ϵ, S_ϵ) = (0.4f0, 0.01570183f0, 0.92618674f0, -177.50803f0, 0, -155.04105f0, 0.16464552f0)
+(energy_ϵ, energy_nucl, energy_vit) = (-177.50803f0, -177.50803f0, -177.50803f0)
+
+
+(idx0, argminpol, argdamp) = (85, 0.7, 0.5f0)
+beta = 0.1
+converged: err=0.0007788837, tol=0.001, nbiter=15
+(polar, energy, err) = (0.015783012f0, 319.0067f0, 0.0007788837f0)
+beta = 0.2
+converged: err=0.00083726645, tol=0.001, nbiter=14
+(polar, energy, err) = (0.028931458f0, 117.74861f0, 0.00083726645f0)
+beta = 0.3
+converged: err=0.0009825826, tol=0.001, nbiter=302
+(polar, energy, err) = (0.661773f0, -157.86235f0, 0.0009825826f0)
+beta = 0.4
+(polar, energy, err) = (0.87476134f0, -176.29767f0, 0.4174571f0)
+11205.472115 seconds (503.80 M allocations: 25.747 GiB, 1.15% gc time, 1.02% compilation time)
+(beta_ϵ, err_ϵ, polar_ϵ, energy_ϵ, check_ϵ, U_ϵ, S_ϵ) = (0.4f0, 0.4174571f0, 0.87476134f0, -176.29767f0, 0, -138.77692f0, 0.22619954f0)
+(energy_ϵ, energy_nucl, energy_vit) = (-176.29767f0, -176.29767f0, -176.29767f0)
+
+
+(idx0, argminpol, argdamp) = (96, 0.7, 0.5f0)
+beta = 0.1
+converged: err=0.00093476474, tol=0.001, nbiter=15
+(polar, energy, err) = (0.0200041f0, 152.543f0, 0.00093476474f0)
+beta = 0.2
+converged: err=0.0007827282, tol=0.001, nbiter=14
+(polar, energy, err) = (0.034410376f0, 49.826805f0, 0.0007827282f0)
+beta = 0.3
+converged: err=0.0009892881, tol=0.001, nbiter=155
+(polar, energy, err) = (0.08945389f0, 117.86004f0, 0.0009892881f0)
+beta = 0.4
+converged: err=0.0009796023, tol=0.001, nbiter=84
+(polar, energy, err) = (0.5885301f0, -85.03785f0, 0.0009796023f0)
+beta = 0.5
+converged: err=0.0009279847, tol=0.001, nbiter=82
+(polar, energy, err) = (0.6481098f0, -94.673454f0, 0.0009279847f0)
+beta = 0.6
+(polar, energy, err) = (0.6912706f0, -15.500366f0, 0.99569744f0)
+beta = 0.7
+(polar, energy, err) = (0.69367075f0, -95.96782f0, 0.23248623f0)
+beta = 0.8
+(polar, energy, err) = (0.72304827f0, -98.86751f0, 0.2391794f0)
+11506.324315 seconds (899.93 M allocations: 45.882 GiB, 1.08% gc time, 1.06% compilation time)
+(beta_ϵ, err_ϵ, polar_ϵ, energy_ϵ, check_ϵ, U_ϵ, S_ϵ) = (0.8f0, 0.2391794f0, 0.72304827f0, -98.86751f0, 4, -37.998543f0, 1.2243812f0)
+(energy_ϵ, energy_nucl, energy_vit) = (-98.86751f0, -85.17735f0, -87.01366f0)
+
+
+
