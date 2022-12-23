@@ -35,14 +35,20 @@ function viterbi_decoding(af, pm)
     return solviterbi, pviterbi
 end
 
-function viterbi_sampling(af, pm)
+function viterbi_sampling(af, pm; init=:random)
     @extract pm : N L
     @extract af : bpb
     @extract bpb : beliefs conditional
 
     solsampled = fill((0,0), L)
-
+    #@show init
     f = rand(1:L) # choose site to sample first
+    if init==:maxP
+        #println("maxP init!")
+        (p, X)=findmax(af.bpb.beliefs)
+        f = X[3]
+    end
+    #@show f
     Pf = Array(beliefs[:,:,f]);
     pf = reshape(Pf, 2(N+2),1)[:,1];
     wf = weights(pf)

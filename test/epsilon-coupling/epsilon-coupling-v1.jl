@@ -115,7 +115,7 @@ function main(args)
         @show index, idx0, ϵ, damp
         Hdist, energy_vit, U_ϵ, S_ϵ, polar_ϵ, beta_ϵ, err_ϵ, check_ϵ, xnsol_vit = find_sol(index, idx0, xn0, ϵ, seq, pm, T, damp, tol, tolnorm, initcond, lr, iters, betarange)
         println("\n")
-        if err_ϵ > 5.0*tol
+        if err_ϵ > 10.0*tol
             println("---> this sequence does not converge <---")
             println("\n")
             exit(0)
