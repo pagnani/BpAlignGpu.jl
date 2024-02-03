@@ -1,5 +1,7 @@
 # BpAlignGpu
 
+Aligning a sequence to a Potts Model, based on approximate message-passing approach https://doi.org/10.1103/PhysRevE.107.044125
+
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://pagnani.github.io/BpAlignGpu.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://pagnani.github.io/BpAlignGpu.jl/dev)
 [![Build Status](https://travis-ci.com/pagnani/BpAlignGpu.jl.svg?branch=main)](https://travis-ci.com/pagnani/BpAlignGpu.jl)
